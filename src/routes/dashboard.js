@@ -12,7 +12,6 @@ const router = express.Router();
  */
 router.get("/summary", async (req, res) => {
   try {
-    // 🧮 Run all queries in parallel
     const [
       totalItems,
       totalDeliveries,
@@ -25,9 +24,11 @@ router.get("/summary", async (req, res) => {
       Delivery.countDocuments(),
       Checkout.countDocuments(),
       User.countDocuments(),
+      // Include all necessary fields for Low Stock table
       Inventory.find({ quantity: { $lt: 5 } })
-        .select("itemId itemName quantity")
+        .select("itemId itemName gradeLevel sizeOrSource itemType quantity")
         .limit(10),
+      // Aggregate for category distribution
       Inventory.aggregate([
         { $group: { _id: "$itemType", count: { $sum: 1 } } },
         { $sort: { count: -1 } },
@@ -76,6 +77,7 @@ router.get("/top-checkedout", async (req, res) => {
 /**
  * GET /api/dashboard/recent
  * 5 most recent deliveries or checkouts
+ * Includes all items in each delivery/checkout
  */
 router.get("/recent", async (req, res) => {
   try {
@@ -84,31 +86,27 @@ router.get("/recent", async (req, res) => {
       Checkout.find().sort({ createdAt: -1 }).limit(3),
     ]);
 
+    const formatDate = (date) =>
+      new Date(date).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
+
     const recent = [
       ...recentDeliveries.map((d) => ({
         user: d.receivedBy,
         action: "delivered",
-        itemName: d.items?.[0]?.itemName || "Unknown",
-        date: new Date(d.createdAt).toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-          year: "numeric",
-        }),
+        items: d.items.map((i) => i.itemName),
+        date: formatDate(d.createdAt),
       })),
       ...recentCheckouts.map((c) => ({
         user: c.checkedOutBy,
         action: "checked out",
-        itemName: c.items?.[0]?.itemName || "Unknown",
-        date: new Date(c.createdAt).toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-          year: "numeric",
-        }),
+        items: c.items.map((i) => i.itemName),
+        date: formatDate(c.createdAt),
       })),
-    ].sort(
-      (a, b) =>
-        new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
+    ].sort((a, b) => new Date(b.date) - new Date(a.date));
 
     res.json(recent.slice(0, 6));
   } catch (error) {
