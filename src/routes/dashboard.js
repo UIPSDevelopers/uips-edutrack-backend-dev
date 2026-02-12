@@ -101,7 +101,7 @@ router.get("/recent", async (req, res) => {
         date: formatDate(d.createdAt),
       })),
       ...recentCheckouts.map((c) => ({
-        user: c.checkedOutBy,
+        user: c.issuedBy,
         action: "checked out",
         items: c.items.map((i) => i.itemName),
         date: formatDate(c.createdAt),
