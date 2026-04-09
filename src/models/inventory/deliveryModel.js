@@ -22,7 +22,11 @@ const DeliverySchema = new mongoose.Schema(
     },
     items: [DeliveryItemSchema],
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-export default mongoose.model("Delivery", DeliverySchema);
+// ✅ Prevent OverwriteModelError
+const Delivery =
+  mongoose.models.Delivery || mongoose.model("Delivery", DeliverySchema);
+
+export default Delivery;

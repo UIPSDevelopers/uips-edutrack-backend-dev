@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
-import Checkout from "../models/checkoutModel.js";
-import Inventory from "../models/inventoryModel.js";
+import Checkout from "../models/inventory/checkoutModel.js";
+import Inventory from "../models/inventory/inventoryModel.js";
 
 // 🧮 Generate unique checkout ID (incrementing)
 const generateCheckoutId = async (session) => {

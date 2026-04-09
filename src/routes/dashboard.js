@@ -1,7 +1,7 @@
 import express from "express";
-import Inventory from "../models/inventoryModel.js";
-import Delivery from "../models/deliveryModel.js";
-import Checkout from "../models/checkoutModel.js";
+import Inventory from "../models/inventory/inventoryModel.js";
+import Delivery from "../models/inventory/deliveryModel.js";
+import Checkout from "../models/inventory/checkoutModel.js";
 import User from "../models/userModel.js";
 
 const router = express.Router();

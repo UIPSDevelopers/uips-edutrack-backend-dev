@@ -1,7 +1,7 @@
-import Delivery from "../models/deliveryModel.js";
-import Checkout from "../models/checkoutModel.js";
-import Inventory from "../models/inventoryModel.js";
-import Return from "../models/returnModel.js";
+import Delivery from "../models/inventory/deliveryModel.js";
+import Checkout from "../models/inventory/checkoutModel.js";
+import Inventory from "../models/inventory/inventoryModel.js";
+import Return from "../models/inventory/returnModel.js";
 
 // 📦 Delivery Report
 export const getDeliveryReport = async (req, res) => {

@@ -1,5 +1,5 @@
-import Delivery from "../models/deliveryModel.js";
-import Inventory from "../models/inventoryModel.js";
+import Delivery from "../models/inventory/DeliveryModel.js";
+import Inventory from "../models/inventory/inventoryModel.js";
 
 // 🧮 Generate unique delivery ID (incrementing)
 const generateDeliveryId = async () => {

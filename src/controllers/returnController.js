@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
-import Return from "../models/returnModel.js";
-import Checkout from "../models/checkoutModel.js";
-import Inventory from "../models/inventoryModel.js";
+import Return from "../models/inventory/returnModel.js";
+import Checkout from "../models/inventory/checkoutModel.js";
+import Inventory from "../models/inventory/inventoryModel.js";
 
 export const addReturn = async (req, res) => {
   const session = await mongoose.startSession();

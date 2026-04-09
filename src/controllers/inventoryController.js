@@ -1,6 +1,6 @@
-import Inventory from "../models/inventoryModel.js";
-import Counter from "../models/counter.js";
-import Delivery from "../models/deliveryModel.js"; // 🆕 make sure path is correct
+import Inventory from "../models/inventory/inventoryModel.js";
+import Counter from "../models/inventory/counter.js";
+import Delivery from "../models/inventory/deliveryModel.js"; // 🆕 make sure path is correct
 
 const generateItemId = async () => {
   const counter = await Counter.findOneAndUpdate(

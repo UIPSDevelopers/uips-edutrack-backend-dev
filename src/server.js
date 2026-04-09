@@ -14,6 +14,8 @@ import checkoutRoutes from "./routes/checkoutRoutes.js";
 import reportRoutes from "./routes/reportRoutes.js";
 import dashboardRoutes from "./routes/dashboard.js";
 import returnRoutes from "./routes/returnRoutes.js";
+import assetRoutes from "./routes/assetRoutes.js";
+import categoriesRoutes from "./routes/categoriesRoutes.js";
 
 dotenv.config();
 
@@ -77,6 +79,9 @@ app.use("/api/checkouts", checkoutRoutes);
 app.use("/api/reports", reportRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/returns", returnRoutes);
+
+app.use("/api/property-tagging", assetRoutes);
+app.use("/api/categories", categoriesRoutes);
 
 // Start server
 const PORT = process.env.PORT || 5000;
