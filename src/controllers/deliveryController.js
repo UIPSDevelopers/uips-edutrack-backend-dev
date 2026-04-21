@@ -1,4 +1,4 @@
-import Delivery from "../models/inventory/DeliveryModel.js";
+import Delivery from "../models/inventory/deliveryModel.js";
 import Inventory from "../models/inventory/inventoryModel.js";
 
 // 🧮 Generate unique delivery ID (incrementing)
