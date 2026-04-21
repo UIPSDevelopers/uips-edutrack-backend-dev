@@ -25,6 +25,8 @@ const app = express();
 const allowedOrigins = [
   "https://edutrack.uips.online",
   "http://localhost:5173",
+  "https://uips-edutrack-hmitcye3b-uips-developers-projects.vercel.app"
+
 ];
 
 app.use(
