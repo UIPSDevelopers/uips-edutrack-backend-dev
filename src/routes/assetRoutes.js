@@ -3,6 +3,7 @@ import {
   createSingleAsset,
   bulkCreateAssets,
   fetchAssets,
+  getAssetQRCode,
 } from "../controllers/assetController.js";
 
 const router = express.Router();
