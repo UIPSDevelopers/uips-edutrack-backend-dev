@@ -1,6 +1,5 @@
 import Asset from "../models/propertytagging/assetsModel.js";
 import Category from "../models/propertytagging/categoriesModel.js";
-import LocationsModel from "../models/propertytagging/locationsModel.js";
 import locationsModel from "../models/propertytagging/locationsModel.js";
 import { generatePropertyTag } from "../utils/generatePropertyTag.js";
 import { generateQRCode } from "../utils/generateQRCode.js";
@@ -22,14 +21,16 @@ export const createSingleAsset = async (req, res) => {
     } = req.body;
 
     const category = await Category.findById(categoryId);
-    const location = locationId ? await LocationsModel.findById(locationId) : null;
+    if (!category) {
+      return res.status(400).json({ message: "Invalid category" });
+    }
 
-    if (!category) return res.status(400).json({ message: "Invalid category" });
+    const location = locationId
+      ? await locationsModel.findById(locationId)
+      : null;
 
-    // Generate property tag
     const propertyTagNumber = await generatePropertyTag(categoryId);
 
-    // Create asset
     const asset = await Asset.create({
       serialNo: propertyTagNumber,
       assetName,
@@ -42,7 +43,6 @@ export const createSingleAsset = async (req, res) => {
       remarks,
     });
 
-    // Generate QR code
     const qrCode = await generateQRCode({
       serialNo: asset.serialNo,
       assetName: asset.assetName,
@@ -50,10 +50,10 @@ export const createSingleAsset = async (req, res) => {
       locationName: location?.name || "",
     });
 
-    res.status(201).json({ asset, qrCode });
+    return res.status(201).json({ asset, qrCode });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: error.message });
+    console.error("createSingleAsset error:", error);
+    return res.status(500).json({ message: error.message });
   }
 };
 
@@ -74,17 +74,21 @@ export const bulkCreateAssets = async (req, res) => {
       remarks = "",
     } = req.body;
 
-    if (!quantity || quantity < 1)
+    if (!quantity || quantity < 1) {
       return res.status(400).json({ message: "Quantity must be at least 1" });
+    }
 
     const category = await Category.findById(categoryId);
-    const location = locationId ? await Location.findById(locationId) : null;
+    if (!category) {
+      return res.status(400).json({ message: "Invalid category" });
+    }
 
-    if (!category) return res.status(400).json({ message: "Invalid category" });
+    const location = locationId
+      ? await locationsModel.findById(locationId)
+      : null;
 
     const assets = [];
 
-    // Create assets sequentially for correct property tag increment
     for (let i = 0; i < quantity; i++) {
       const propertyTagNumber = await generatePropertyTag(categoryId);
 
@@ -103,7 +107,6 @@ export const bulkCreateAssets = async (req, res) => {
       assets.push(asset);
     }
 
-    // Generate QR codes in parallel
     const qrCodes = await Promise.all(
       assets.map((asset) =>
         generateQRCode({
@@ -120,23 +123,26 @@ export const bulkCreateAssets = async (req, res) => {
       qrCode: qrCodes[index],
     }));
 
-    res.status(201).json({ assets: result });
+    return res.status(201).json({ assets: result });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: error.message });
+    console.error("bulkCreateAssets error:", error);
+    return res.status(500).json({ message: error.message });
   }
 };
 
+/**
+ * Fetch assets
+ */
 export const fetchAssets = async (req, res) => {
   try {
     const assets = await Asset.find()
-      .populate("categoryId", "name code")  // get category details
-      .populate("locationId", "name building floor") 
-      .sort({ createdAt: -1 }); // newest first
+      .populate("categoryId", "name code")
+      .populate("locationId", "name building floor")
+      .sort({ createdAt: -1 });
 
-    res.status(200).json({ assets });
+    return res.status(200).json({ assets });
   } catch (error) {
-    console.error("Error fetching assets:", error);
-    res.status(500).json({ message: error.message });
+    console.error("fetchAssets error:", error);
+    return res.status(500).json({ message: error.message });
   }
 };
