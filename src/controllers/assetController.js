@@ -1,6 +1,7 @@
 import Asset from "../models/propertytagging/assetsModel.js";
 import Category from "../models/propertytagging/categoriesModel.js";
-import Location from "../models/propertytagging/locationsModel.js";
+import LocationsModel from "../models/propertytagging/locationsModel.js";
+import locationsModel from "../models/propertytagging/locationsModel.js";
 import { generatePropertyTag } from "../utils/generatePropertyTag.js";
 import { generateQRCode } from "../utils/generateQRCode.js";
 
@@ -21,7 +22,7 @@ export const createSingleAsset = async (req, res) => {
     } = req.body;
 
     const category = await Category.findById(categoryId);
-    const location = locationId ? await Location.findById(locationId) : null;
+    const location = locationId ? await LocationsModel.findById(locationId) : null;
 
     if (!category) return res.status(400).json({ message: "Invalid category" });
 
