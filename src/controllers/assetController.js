@@ -188,26 +188,34 @@ export const addAssetService = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const {
-      type, // ✅ from frontend
-      date, // ✅ from frontend
-      remarks, // ✅ from frontend
-      cost,
-      performedBy,
-    } = req.body;
+    const { type, date, remarks, cost, performedBy } = req.body;
 
     const asset = await Asset.findById(id);
     if (!asset) {
       return res.status(404).json({ message: "Asset not found" });
     }
 
+    // ✅ validate service type against enum
+    const allowedTypes = ["Cleaning", "Repair", "Maintenance", "Inspection"];
+
+    const serviceType = allowedTypes.includes(type) ? type : "Maintenance"; // safe fallback (valid enum)
+
+    // ✅ fix date issue
+    const serviceDate = date ? new Date(date) : new Date();
+
+    if (date && isNaN(serviceDate.getTime())) {
+      return res.status(400).json({
+        message: "Invalid service date",
+      });
+    }
+
     const service = await AssetService.create({
       assetId: id,
-      serviceType: type || "General",
+      serviceType,
       description: remarks || "",
       cost: cost || 0,
       performedBy: performedBy || "N/A",
-      serviceDate: date || new Date(),
+      serviceDate,
     });
 
     return res.status(201).json(service);
