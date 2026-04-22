@@ -16,6 +16,7 @@ import dashboardRoutes from "./routes/dashboard.js";
 import returnRoutes from "./routes/returnRoutes.js";
 import assetRoutes from "./routes/assetRoutes.js";
 import categoriesRoutes from "./routes/categoriesRoutes.js";
+import locationRoutes from "./routes/locationsRoutes.js";
 
 dotenv.config();
 
@@ -83,6 +84,7 @@ app.use("/api/returns", returnRoutes);
 
 app.use("/api/property-tagging", assetRoutes);
 app.use("/api/categories", categoriesRoutes);
+app.use("/api/locations", locationRoutes);
 
 // Start server
 const PORT = process.env.PORT || 5000;
