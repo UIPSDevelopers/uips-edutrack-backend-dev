@@ -16,4 +16,7 @@ router.post("/assets/bulk-create", bulkCreateAssets);
 // Fetch all assets
 router.get("/assets", fetchAssets);
 
+router.get("/assets/:id/qrcode", getAssetQRCode);
+
+
 export default router;

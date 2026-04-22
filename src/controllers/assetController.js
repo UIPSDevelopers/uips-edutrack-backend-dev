@@ -49,12 +49,8 @@ export const createSingleAsset = async (req, res) => {
       remarks,
     });
 
-    const qrCode = await generateQRCode({
-      serialNo: asset.serialNo,
-      assetName: asset.assetName,
-      categoryName: category.name,
-      locationName: location?.name || "",
-    });
+    // QR should ALWAYS be URL-based (not JSON)
+    const qrCode = await generateQRCode(asset._id);
 
     return res.status(201).json({ asset, qrCode });
   } catch (error) {
@@ -79,6 +75,10 @@ export const bulkCreateAssets = async (req, res) => {
       status = "Active",
       remarks = "",
     } = req.body;
+
+    if (!categoryId || !assetName) {
+      return res.status(400).json({ message: "Required fields missing" });
+    }
 
     if (!quantity || quantity < 1) {
       return res.status(400).json({ message: "Quantity must be at least 1" });
@@ -121,24 +121,22 @@ export const bulkCreateAssets = async (req, res) => {
 };
 
 /* =========================================================
-   GET ALL ASSETS (WITH SEARCH)
+   GET ALL ASSETS (SEARCH)
 ========================================================= */
 export const fetchAssets = async (req, res) => {
   try {
     const { search } = req.query;
 
-    let query = {};
-
-    if (search) {
-      query = {
-        $or: [
-          { assetName: { $regex: search, $options: "i" } },
-          { serialNo: { $regex: search, $options: "i" } },
-          { brand: { $regex: search, $options: "i" } },
-          { model: { $regex: search, $options: "i" } },
-        ],
-      };
-    }
+    const query = search
+      ? {
+          $or: [
+            { assetName: { $regex: search, $options: "i" } },
+            { serialNo: { $regex: search, $options: "i" } },
+            { brand: { $regex: search, $options: "i" } },
+            { model: { $regex: search, $options: "i" } },
+          ],
+        }
+      : {};
 
     const assets = await Asset.find(query)
       .populate("categoryId", "name code")
@@ -182,14 +180,23 @@ export const getAssetById = async (req, res) => {
 };
 
 /* =========================================================
-   ADD SERVICE TO ASSET
+   ADD SERVICE TO ASSET (FIXED)
 ========================================================= */
 export const addAssetService = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const { serviceType, description, cost, performedBy, serviceDate } =
-      req.body;
+    const {
+      serviceType,
+      description = "",
+      cost = 0,
+      performedBy = "N/A",
+      serviceDate,
+    } = req.body;
+
+    if (!serviceType) {
+      return res.status(400).json({ message: "Service type is required" });
+    }
 
     const asset = await Asset.findById(id);
     if (!asset) {
@@ -199,15 +206,39 @@ export const addAssetService = async (req, res) => {
     const service = await AssetService.create({
       assetId: id,
       serviceType,
-      description: description || "",
-      cost: cost || 0,
-      performedBy: performedBy || "N/A",
+      description,
+      cost: Number(cost),
+      performedBy,
       serviceDate: serviceDate ? new Date(serviceDate) : new Date(),
     });
 
     return res.status(201).json(service);
   } catch (error) {
     console.error("addAssetService error:", error);
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+/* =========================================================
+   GET QR CODE (OPTIONAL ENDPOINT)
+========================================================= */
+export const getAssetQRCode = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const asset = await Asset.findById(id);
+    if (!asset) {
+      return res.status(404).json({ message: "Asset not found" });
+    }
+
+    const qrCode = await generateQRCode(asset._id);
+
+    return res.status(200).json({
+      assetId: asset._id,
+      qrCode,
+    });
+  } catch (error) {
+    console.error("getAssetQRCode error:", error);
     return res.status(500).json({ message: error.message });
   }
 };

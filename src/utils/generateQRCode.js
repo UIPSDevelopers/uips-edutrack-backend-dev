@@ -1,19 +1,12 @@
 import QRCode from "qrcode";
 
 /**
- * Generates a QR code as a data URL (base64 image)
- * @param {Object} assetData - info to encode in QR
- * @returns {string} data URL of QR code
+ * Generates a QR code that redirects to asset details page
+ * @param {string} assetId
+ * @returns {string} data URL (QR image)
  */
-export const generateQRCode = async (assetData) => {
-  // Example: encode serialNo, assetName, category, location
-  const qrPayload = JSON.stringify({
-    serialNo: assetData.serialNo,
-    assetName: assetData.assetName,
-    category: assetData.categoryName,
-    location: assetData.locationName || "",
-  });
+export const generateQRCode = async (assetId) => {
+  const url = `${process.env.FRONTEND_URL}/property-tagging/assets/${assetId}`;
 
-  const qrCodeDataUrl = await QRCode.toDataURL(qrPayload);
-  return qrCodeDataUrl;
+  return await QRCode.toDataURL(url);
 };
