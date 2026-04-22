@@ -22,6 +22,10 @@ export const createSingleAsset = async (req, res) => {
       remarks = "",
     } = req.body;
 
+    if (!categoryId || !assetName) {
+      return res.status(400).json({ message: "Required fields missing" });
+    }
+
     const category = await Category.findById(categoryId);
     if (!category) {
       return res.status(400).json({ message: "Invalid category" });
@@ -117,11 +121,26 @@ export const bulkCreateAssets = async (req, res) => {
 };
 
 /* =========================================================
-   GET ALL ASSETS
+   GET ALL ASSETS (WITH SEARCH)
 ========================================================= */
 export const fetchAssets = async (req, res) => {
   try {
-    const assets = await Asset.find()
+    const { search } = req.query;
+
+    let query = {};
+
+    if (search) {
+      query = {
+        $or: [
+          { assetName: { $regex: search, $options: "i" } },
+          { serialNo: { $regex: search, $options: "i" } },
+          { brand: { $regex: search, $options: "i" } },
+          { model: { $regex: search, $options: "i" } },
+        ],
+      };
+    }
+
+    const assets = await Asset.find(query)
       .populate("categoryId", "name code")
       .populate("locationId", "name building floor")
       .sort({ createdAt: -1 });
@@ -169,8 +188,13 @@ export const addAssetService = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const { serviceType, description, cost, performedBy, serviceDate } =
-      req.body;
+    const {
+      type, // ✅ from frontend
+      date, // ✅ from frontend
+      remarks, // ✅ from frontend
+      cost,
+      performedBy,
+    } = req.body;
 
     const asset = await Asset.findById(id);
     if (!asset) {
@@ -179,11 +203,11 @@ export const addAssetService = async (req, res) => {
 
     const service = await AssetService.create({
       assetId: id,
-      serviceType,
-      description,
-      cost,
-      performedBy,
-      serviceDate,
+      serviceType: type || "General",
+      description: remarks || "",
+      cost: cost || 0,
+      performedBy: performedBy || "N/A",
+      serviceDate: date || new Date(),
     });
 
     return res.status(201).json(service);
