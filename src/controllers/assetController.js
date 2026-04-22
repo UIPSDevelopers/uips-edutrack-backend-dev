@@ -1,12 +1,14 @@
 import Asset from "../models/propertytagging/assetsModel.js";
 import Category from "../models/propertytagging/categoriesModel.js";
 import locationsModel from "../models/propertytagging/locationsModel.js";
+import AssetService from "../models/propertytagging/assetServiceModel.js";
+
 import { generatePropertyTag } from "../utils/generatePropertyTag.js";
 import { generateQRCode } from "../utils/generateQRCode.js";
 
-/**
- * Create one asset manually
- */
+/* =========================================================
+   CREATE SINGLE ASSET
+========================================================= */
 export const createSingleAsset = async (req, res) => {
   try {
     const {
@@ -57,9 +59,9 @@ export const createSingleAsset = async (req, res) => {
   }
 };
 
-/**
- * Bulk create assets
- */
+/* =========================================================
+   BULK CREATE ASSETS
+========================================================= */
 export const bulkCreateAssets = async (req, res) => {
   try {
     const {
@@ -107,32 +109,16 @@ export const bulkCreateAssets = async (req, res) => {
       assets.push(asset);
     }
 
-    const qrCodes = await Promise.all(
-      assets.map((asset) =>
-        generateQRCode({
-          serialNo: asset.serialNo,
-          assetName: asset.assetName,
-          categoryName: category.name,
-          locationName: location?.name || "",
-        }),
-      ),
-    );
-
-    const result = assets.map((asset, index) => ({
-      asset,
-      qrCode: qrCodes[index],
-    }));
-
-    return res.status(201).json({ assets: result });
+    return res.status(201).json({ assets });
   } catch (error) {
     console.error("bulkCreateAssets error:", error);
     return res.status(500).json({ message: error.message });
   }
 };
 
-/**
- * Fetch assets
- */
+/* =========================================================
+   GET ALL ASSETS
+========================================================= */
 export const fetchAssets = async (req, res) => {
   try {
     const assets = await Asset.find()
@@ -143,6 +129,66 @@ export const fetchAssets = async (req, res) => {
     return res.status(200).json({ assets });
   } catch (error) {
     console.error("fetchAssets error:", error);
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+/* =========================================================
+   GET SINGLE ASSET + SERVICE HISTORY
+========================================================= */
+export const getAssetById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const asset = await Asset.findById(id)
+      .populate("categoryId", "name code")
+      .populate("locationId", "name building floor");
+
+    if (!asset) {
+      return res.status(404).json({ message: "Asset not found" });
+    }
+
+    const services = await AssetService.find({ assetId: id }).sort({
+      serviceDate: -1,
+    });
+
+    return res.status(200).json({
+      asset,
+      services,
+    });
+  } catch (error) {
+    console.error("getAssetById error:", error);
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+/* =========================================================
+   ADD SERVICE TO ASSET
+========================================================= */
+export const addAssetService = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const { serviceType, description, cost, performedBy, serviceDate } =
+      req.body;
+
+    const asset = await Asset.findById(id);
+    if (!asset) {
+      return res.status(404).json({ message: "Asset not found" });
+    }
+
+    const service = await AssetService.create({
+      assetId: id,
+      serviceType,
+      description,
+      cost,
+      performedBy,
+      serviceDate,
+    });
+
+    return res.status(201).json(service);
+  } catch (error) {
+    console.error("addAssetService error:", error);
     return res.status(500).json({ message: error.message });
   }
 };
