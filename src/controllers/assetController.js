@@ -6,6 +6,8 @@ import AssetService from "../models/propertytagging/assetServiceModel.js";
 import { generatePropertyTag } from "../utils/generatePropertyTag.js";
 import { generateQRCode } from "../utils/generateQRCode.js";
 
+import mongoose from "mongoose";
+
 /* =========================================================
    CREATE SINGLE ASSET
 ========================================================= */
