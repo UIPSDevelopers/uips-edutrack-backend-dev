@@ -32,7 +32,7 @@ const assetSchema = new mongoose.Schema(
     },
     locationId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "locationsModel",
+      ref: "Location",
     },
   },
   { timestamps: true }
