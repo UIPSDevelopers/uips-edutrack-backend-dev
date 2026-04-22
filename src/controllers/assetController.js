@@ -153,13 +153,11 @@ export const fetchAssets = async (req, res) => {
 /* =========================================================
    GET SINGLE ASSET + SERVICE HISTORY
 ========================================================= */
-import mongoose from "mongoose";
-
 export const getAssetById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // ✅ VALIDATE ID FIRST (VERY IMPORTANT)
+    // ✅ VALIDATE OBJECT ID FIRST
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ message: "Invalid asset ID" });
     }
@@ -172,9 +170,9 @@ export const getAssetById = async (req, res) => {
       return res.status(404).json({ message: "Asset not found" });
     }
 
-    const services = await AssetService.find({ assetId: id })
-      .sort({ serviceDate: -1 })
-      .lean(); // ✅ safer + faster
+    const services = await AssetService.find({ assetId: id }).sort({
+      serviceDate: -1,
+    });
 
     return res.status(200).json({
       asset,
@@ -182,13 +180,10 @@ export const getAssetById = async (req, res) => {
     });
   } catch (error) {
     console.error("getAssetById error:", error);
-
-    return res.status(500).json({
-      message: "Server error while fetching asset",
-      error: error.message,
-    });
+    return res.status(500).json({ message: error.message });
   }
 };
+
 
 /* =========================================================
    ADD SERVICE TO ASSET (FIXED)
