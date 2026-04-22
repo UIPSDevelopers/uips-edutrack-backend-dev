@@ -6,7 +6,7 @@ import AssetService from "../models/propertytagging/assetServiceModel.js";
 import { generatePropertyTag } from "../utils/generatePropertyTag.js";
 import { generateQRCode } from "../utils/generateQRCode.js";
 
-import mongoose from "mongoose";
+
 
 /* =========================================================
    CREATE SINGLE ASSET
@@ -155,6 +155,8 @@ export const fetchAssets = async (req, res) => {
 /* =========================================================
    GET SINGLE ASSET + SERVICE HISTORY
 ========================================================= */
+import mongoose from "mongoose";
+
 export const getAssetById = async (req, res) => {
   try {
     const { id } = req.params;
