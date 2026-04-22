@@ -1,4 +1,4 @@
-import LocationsModel from "../models/propertytagging/locationsModel.js";
+import locationsModel from "../models/propertytagging/locationsModel.js";
 
 /**
  * @desc    Add new location
@@ -16,7 +16,7 @@ export const addLocation = async (req, res) => {
     }
 
     // Check duplicate name
-    const existingLocation = await LocationsModel.findOne({ name });
+    const existingLocation = await locationsModel.findOne({ name });
 
     if (existingLocation) {
       return res.status(400).json({
@@ -24,7 +24,7 @@ export const addLocation = async (req, res) => {
       });
     }
 
-    const newLocation = await LocationsModel.create({
+    const newLocation = await locationsModel.create({
       name,
       building,
       floor,
@@ -59,9 +59,9 @@ export const getAllLocations = async (req, res) => {
       name: { $regex: search, $options: "i" },
     };
 
-    const total = await LocationsModel.countDocuments(searchFilter);
+    const total = await locationsModel.countDocuments(searchFilter);
 
-    const locations = await LocationsModel.find(searchFilter)
+    const locations = await locationsModel.find(searchFilter)
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
@@ -89,7 +89,7 @@ export const updateLocation = async (req, res) => {
     const { id } = req.params;
     const { name, building, floor, description } = req.body;
 
-    const location = await LocationsModel.findById(id);
+    const location = await locationsModel.findById(id);
 
     if (!location) {
       return res.status(404).json({
@@ -98,7 +98,7 @@ export const updateLocation = async (req, res) => {
     }
 
     // check duplicate name
-    const existingLocation = await LocationsModel.findOne({
+    const existingLocation = await locationsModel.findOne({
       name,
       _id: { $ne: id },
     });
@@ -136,7 +136,7 @@ export const deleteLocation = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const location = await LocationsModel.findById(id);
+    const location = await locationsModel.findById(id);
 
     if (!location) {
       return res.status(404).json({

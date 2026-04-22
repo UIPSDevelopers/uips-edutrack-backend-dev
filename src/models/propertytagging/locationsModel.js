@@ -7,7 +7,7 @@ const locationSchema = new mongoose.Schema(
     floor: { type: String },
     description: { type: String },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const LocationsModel = mongoose.model("Location", locationSchema);
