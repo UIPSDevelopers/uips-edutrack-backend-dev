@@ -4,7 +4,7 @@ import {
   getAllLocations,
   updateLocation,
   deleteLocation,
-} from "../../controllers/propertytagging/locationsController.js";
+} from "../controllers/locationsController.js";
 
 const router = express.Router();
 
