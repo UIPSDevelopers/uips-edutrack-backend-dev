@@ -52,7 +52,7 @@ export const createSingleAsset = async (req, res) => {
 };
 
 /* =========================================================
-   BULK CREATE
+   BULK CREATE ASSETS
 ========================================================= */
 export const bulkCreateAssets = async (req, res) => {
   try {
@@ -128,7 +128,7 @@ export const fetchAssets = async (req, res) => {
 };
 
 /* =========================================================
-   GET SINGLE ASSET
+   GET SINGLE ASSET + SERVICE HISTORY
 ========================================================= */
 export const getAssetById = async (req, res) => {
   try {
@@ -150,7 +150,10 @@ export const getAssetById = async (req, res) => {
       serviceDate: -1,
     });
 
-    return res.status(200).json({ asset, services });
+    return res.status(200).json({
+      asset,
+      services,
+    });
   } catch (error) {
     console.error("getAssetById error:", error);
     return res.status(500).json({ message: error.message });
@@ -158,11 +161,54 @@ export const getAssetById = async (req, res) => {
 };
 
 /* =========================================================
-   QR CODE (IMAGE RESPONSE)
+   ADD SERVICE TO ASSET
+========================================================= */
+export const addAssetService = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      serviceType,
+      description = "",
+      cost = 0,
+      performedBy = "N/A",
+      serviceDate,
+    } = req.body;
+
+    if (!serviceType) {
+      return res.status(400).json({ message: "Service type is required" });
+    }
+
+    const asset = await Asset.findById(id);
+    if (!asset) {
+      return res.status(404).json({ message: "Asset not found" });
+    }
+
+    const service = await AssetService.create({
+      assetId: id,
+      serviceType,
+      description,
+      cost: Number(cost),
+      performedBy,
+      serviceDate: serviceDate ? new Date(serviceDate) : new Date(),
+    });
+
+    return res.status(201).json(service);
+  } catch (error) {
+    console.error("addAssetService error:", error);
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+/* =========================================================
+   GET QR CODE (IMAGE BUFFER)
 ========================================================= */
 export const getAssetQRCode = async (req, res) => {
   try {
     const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid asset ID" });
+    }
 
     const asset = await Asset.findById(id);
     if (!asset) {
