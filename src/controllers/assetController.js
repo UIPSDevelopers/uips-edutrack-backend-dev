@@ -4,7 +4,6 @@ import locationsModel from "../models/propertytagging/locationsModel.js";
 import AssetService from "../models/propertytagging/assetServiceModel.js";
 
 import { generatePropertyTag } from "../utils/generatePropertyTag.js";
-import { generateQRCodeBuffer } from "../utils/generateQRCode.js";
 
 
 
