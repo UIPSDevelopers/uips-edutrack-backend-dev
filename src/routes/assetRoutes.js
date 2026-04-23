@@ -4,6 +4,7 @@ import {
   bulkCreateAssets,
   fetchAssets,
   getAssetQRCode,
+  getAssetById
 } from "../controllers/assetController.js";
 
 const router = express.Router();
@@ -19,5 +20,6 @@ router.get("/assets", fetchAssets);
 
 router.get("/assets/:id/qrcode", getAssetQRCode);
 
+router.get("/assets/:id", getAssetById);
 
 export default router;
