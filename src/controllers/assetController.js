@@ -54,7 +54,7 @@ export const createSingleAsset = async (req, res) => {
     // QR should ALWAYS be URL-based (not JSON)
     const qrCode = await generateQRCode(asset._id);
 
-    return res.status(201).json({ asset, qrCode });
+    return res.status(201).json({ asset });
   } catch (error) {
     console.error("createSingleAsset error:", error);
     return res.status(500).json({ message: error.message });
@@ -232,6 +232,8 @@ export const addAssetService = async (req, res) => {
 /* =========================================================
    GET QR CODE (OPTIONAL ENDPOINT)
 ========================================================= */
+import { generateQRCodeBuffer } from "../utils/generateQRCode.js";
+
 export const getAssetQRCode = async (req, res) => {
   try {
     const { id } = req.params;
@@ -241,14 +243,14 @@ export const getAssetQRCode = async (req, res) => {
       return res.status(404).json({ message: "Asset not found" });
     }
 
-    const qrCode = await generateQRCode(asset._id);
+    const qrImage = await generateQRCodeBuffer(asset._id);
 
-    return res.status(200).json({
-      assetId: asset._id,
-      qrCode,
-    });
+    res.setHeader("Content-Type", "image/png");
+    return res.send(qrImage);
+
   } catch (error) {
     console.error("getAssetQRCode error:", error);
     return res.status(500).json({ message: error.message });
   }
 };
+
