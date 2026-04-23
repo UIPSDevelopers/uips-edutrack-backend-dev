@@ -3,23 +3,40 @@ import {
   createSingleAsset,
   bulkCreateAssets,
   fetchAssets,
+  getAssetById,
   getAssetQRCode,
-  getAssetById
 } from "../controllers/assetController.js";
 
 const router = express.Router();
 
-// Manual single asset creation
-router.post("/asset/create", createSingleAsset);
+/* =========================
+   CREATE ASSET
+   POST /api/asset/assets
+========================= */
+router.post("/assets", createSingleAsset);
 
-// Bulk asset creation
+/* =========================
+   BULK CREATE
+   POST /api/asset/assets/bulk-create
+========================= */
 router.post("/assets/bulk-create", bulkCreateAssets);
 
-// Fetch all assets
+/* =========================
+   GET ALL ASSETS
+   GET /api/asset/assets
+========================= */
 router.get("/assets", fetchAssets);
 
-router.get("/assets/:id/qrcode", getAssetQRCode);
-
+/* =========================
+   GET SINGLE ASSET
+   GET /api/asset/assets/:id
+========================= */
 router.get("/assets/:id", getAssetById);
+
+/* =========================
+   QR CODE IMAGE
+   GET /api/asset/assets/:id/qrcode
+========================= */
+router.get("/assets/:id/qrcode", getAssetQRCode);
 
 export default router;

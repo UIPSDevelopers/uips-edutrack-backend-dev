@@ -4,8 +4,8 @@ import locationsModel from "../models/propertytagging/locationsModel.js";
 import AssetService from "../models/propertytagging/assetServiceModel.js";
 
 import { generatePropertyTag } from "../utils/generatePropertyTag.js";
-
-
+import { generateQRCodeBuffer } from "../utils/generateQRCode.js";
+import mongoose from "mongoose";
 
 /* =========================================================
    CREATE SINGLE ASSET
@@ -32,14 +32,8 @@ export const createSingleAsset = async (req, res) => {
       return res.status(400).json({ message: "Invalid category" });
     }
 
-    const location = locationId
-      ? await locationsModel.findById(locationId)
-      : null;
-
-    const propertyTagNumber = await generatePropertyTag(categoryId);
-
     const asset = await Asset.create({
-      serialNo: propertyTagNumber,
+      serialNo: await generatePropertyTag(categoryId),
       assetName,
       categoryId,
       brand,
@@ -50,9 +44,6 @@ export const createSingleAsset = async (req, res) => {
       remarks,
     });
 
-    // QR should ALWAYS be URL-based (not JSON)
-    const qrCode = await generateQRCode(asset._id);
-
     return res.status(201).json({ asset });
   } catch (error) {
     console.error("createSingleAsset error:", error);
@@ -61,7 +52,7 @@ export const createSingleAsset = async (req, res) => {
 };
 
 /* =========================================================
-   BULK CREATE ASSETS
+   BULK CREATE
 ========================================================= */
 export const bulkCreateAssets = async (req, res) => {
   try {
@@ -77,30 +68,15 @@ export const bulkCreateAssets = async (req, res) => {
       remarks = "",
     } = req.body;
 
-    if (!categoryId || !assetName) {
+    if (!categoryId || !assetName || !quantity) {
       return res.status(400).json({ message: "Required fields missing" });
     }
-
-    if (!quantity || quantity < 1) {
-      return res.status(400).json({ message: "Quantity must be at least 1" });
-    }
-
-    const category = await Category.findById(categoryId);
-    if (!category) {
-      return res.status(400).json({ message: "Invalid category" });
-    }
-
-    const location = locationId
-      ? await locationsModel.findById(locationId)
-      : null;
 
     const assets = [];
 
     for (let i = 0; i < quantity; i++) {
-      const propertyTagNumber = await generatePropertyTag(categoryId);
-
       const asset = await Asset.create({
-        serialNo: propertyTagNumber,
+        serialNo: await generatePropertyTag(categoryId),
         assetName,
         categoryId,
         brand,
@@ -122,7 +98,7 @@ export const bulkCreateAssets = async (req, res) => {
 };
 
 /* =========================================================
-   GET ALL ASSETS (SEARCH)
+   GET ALL ASSETS
 ========================================================= */
 export const fetchAssets = async (req, res) => {
   try {
@@ -152,15 +128,12 @@ export const fetchAssets = async (req, res) => {
 };
 
 /* =========================================================
-   GET SINGLE ASSET + SERVICE HISTORY
+   GET SINGLE ASSET
 ========================================================= */
-import mongoose from "mongoose";
-
 export const getAssetById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // ✅ VALIDATE OBJECT ID FIRST
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ message: "Invalid asset ID" });
     }
@@ -177,62 +150,16 @@ export const getAssetById = async (req, res) => {
       serviceDate: -1,
     });
 
-    return res.status(200).json({
-      asset,
-      services,
-    });
+    return res.status(200).json({ asset, services });
   } catch (error) {
     console.error("getAssetById error:", error);
     return res.status(500).json({ message: error.message });
   }
 };
 
-
 /* =========================================================
-   ADD SERVICE TO ASSET (FIXED)
+   QR CODE (IMAGE RESPONSE)
 ========================================================= */
-export const addAssetService = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const {
-      serviceType,
-      description = "",
-      cost = 0,
-      performedBy = "N/A",
-      serviceDate,
-    } = req.body;
-
-    if (!serviceType) {
-      return res.status(400).json({ message: "Service type is required" });
-    }
-
-    const asset = await Asset.findById(id);
-    if (!asset) {
-      return res.status(404).json({ message: "Asset not found" });
-    }
-
-    const service = await AssetService.create({
-      assetId: id,
-      serviceType,
-      description,
-      cost: Number(cost),
-      performedBy,
-      serviceDate: serviceDate ? new Date(serviceDate) : new Date(),
-    });
-
-    return res.status(201).json(service);
-  } catch (error) {
-    console.error("addAssetService error:", error);
-    return res.status(500).json({ message: error.message });
-  }
-};
-
-/* =========================================================
-   GET QR CODE (OPTIONAL ENDPOINT)
-========================================================= */
-import { generateQRCodeBuffer } from "../utils/generateQRCode.js";
-
 export const getAssetQRCode = async (req, res) => {
   try {
     const { id } = req.params;
@@ -246,10 +173,8 @@ export const getAssetQRCode = async (req, res) => {
 
     res.setHeader("Content-Type", "image/png");
     return res.send(qrImage);
-
   } catch (error) {
     console.error("getAssetQRCode error:", error);
     return res.status(500).json({ message: error.message });
   }
 };
-

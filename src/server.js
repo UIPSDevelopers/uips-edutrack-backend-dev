@@ -1,5 +1,3 @@
-// server.js (or index.js)
-
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
@@ -23,11 +21,13 @@ dotenv.config();
 
 const app = express();
 
-// CORS
+/* =========================
+   CORS
+========================= */
 const allowedOrigins = [
   "https://edutrack.uips.online",
   "http://localhost:5173",
-  "https://uips-edutrack-dev.vercel.app"
+  "https://uips-edutrack-dev.vercel.app",
 ];
 
 app.use(
@@ -38,42 +38,40 @@ app.use(
       return callback(new Error("Not allowed by CORS"), false);
     },
     credentials: true,
-  })
+  }),
 );
 
-// ❌ REMOVE THIS
-// app.use(express.json());
-
-// ✅ KEEP ONLY ONE JSON PARSER WITH LIMIT
+/* =========================
+   BODY PARSER
+========================= */
 app.use(bodyParser.json({ limit: "10mb" }));
 app.use(bodyParser.urlencoded({ extended: true, limit: "10mb" }));
 
-// Health Check
+/* =========================
+   HEALTH CHECK
+========================= */
 app.get("/api/health", (req, res) => {
   res.json({
     status: "ok",
-    message: "EduTrack backend is running",
+    message: "EduTrack backend running",
     time: new Date().toISOString(),
   });
 });
 
-// MongoDB Connection
-const MONGO_URI = process.env.MONGO_URI;
-
-if (!MONGO_URI) {
-  console.error("❌ MONGO_URI is not defined");
-  process.exit(1);
-}
-
+/* =========================
+   MONGODB
+========================= */
 mongoose
-  .connect(MONGO_URI)
-  .then(() => console.log("✅ Connected to MongoDB"))
+  .connect(process.env.MONGO_URI)
+  .then(() => console.log("✅ MongoDB connected"))
   .catch((err) => {
-    console.error("❌ MongoDB connection error:", err);
+    console.error("❌ MongoDB error:", err);
     process.exit(1);
   });
 
-// Routes
+/* =========================
+   ROUTES
+========================= */
 app.use("/api/users", userRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/inventory", inventoryRoutes);
@@ -83,10 +81,17 @@ app.use("/api/reports", reportRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/returns", returnRoutes);
 app.use("/api/property-tagging", propertyTaggingRoutes);
-app.use("/api/assets", assetRoutes);
+
+/* ✅ FINAL CLEAN DESIGN */
+app.use("/api/asset", assetRoutes);
+
 app.use("/api/categories", categoriesRoutes);
 app.use("/api/locations", locationRoutes);
 
-// Start server
+/* =========================
+   START SERVER
+========================= */
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+app.listen(PORT, () =>
+  console.log(`🚀 Server running on port ${PORT}`),
+);
