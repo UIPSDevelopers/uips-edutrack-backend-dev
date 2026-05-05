@@ -3,59 +3,30 @@ import Checkout from "../models/inventory/checkoutModel.js";
 import Inventory from "../models/inventory/inventoryModel.js";
 import Return from "../models/inventory/returnModel.js";
 
-// 📦 Delivery Report
-export const getDeliveryReport = async (req, res) => {
-  try {
-    const { from, to, page = 1, limit = 20, all } = req.query;
-    const filter = {};
+/* =========================
+   🔧 Helpers
+========================= */
 
-    if (from && to) {
-      filter.dateReceived = {
-        $gte: new Date(from),
-        $lte: new Date(to),
-      };
-    }
-
-    // 🔹 Fetch all deliveries within date range
-    const deliveries = await Delivery.find(filter)
-      .sort({ dateReceived: -1 })
-      .select("deliveryNumber supplier receivedBy dateReceived items");
-
-    // 🔹 Flatten items for table view
-    const formatted = [];
-    deliveries.forEach((d) => {
-      d.items.forEach((item) => {
-        formatted.push({
-          deliveryNumber: d.deliveryNumber,
-          supplier: d.supplier,
-          itemName: item.itemName,
-          sizeOrSource: item.sizeOrSource || "-",
-          gradeLevel: item.gradeLevel || "-",
-          barcode: item.barcode?.length ? item.barcode.join(", ") : "-",
-          quantity: item.quantity,
-          date: new Date(d.dateReceived).toLocaleDateString(),
-          receivedBy: d.receivedBy,
-        });
-      });
-    });
-
-    // 🔹 Apply backend pagination on flattened rows
-    const paged = paginateArray(formatted, page, limit, all === "true");
-
-    res.status(200).json(paged);
-  } catch (error) {
-    console.error("❌ Error generating delivery report:", error);
-    res
-      .status(500)
-      .json({ message: "Server error generating delivery report." });
-  }
+// 📅 Date filter builder
+const buildDateFilter = (from, to, field) => {
+  if (!from || !to) return {};
+  return {
+    [field]: {
+      $gte: new Date(from),
+      $lte: new Date(new Date(to).setHours(23, 59, 59, 999)),
+    },
+  };
 };
 
-// Simple array pagination helper
+// 📄 Format date
+const formatDate = (date) => new Date(date).toLocaleDateString();
+
+// 📦 Pagination
 const paginateArray = (array, page = 1, limit = 20, allFlag = false) => {
   const isAll = allFlag || !limit || Number(limit) === 0;
 
   const total = array.length;
+
   if (isAll) {
     return {
       items: array,
@@ -80,102 +51,127 @@ const paginateArray = (array, page = 1, limit = 20, allFlag = false) => {
   };
 };
 
-// 🔁 Returns Report
+/* =========================
+   📦 DELIVERY REPORT
+========================= */
+
+export const getDeliveryReport = async (req, res) => {
+  try {
+    const { from, to, page = 1, limit = 20, all } = req.query;
+
+    const deliveries = await Delivery.find(
+      buildDateFilter(from, to, "dateReceived"),
+    )
+      .sort({ dateReceived: -1 })
+      .select("deliveryNumber supplier receivedBy dateReceived items");
+
+    const formatted = deliveries.flatMap((d) =>
+      d.items.map((item) => ({
+        deliveryNumber: d.deliveryNumber,
+        supplier: d.supplier,
+        itemName: item.itemName,
+        itemType: item.itemType || "-", // ✅ ADDED
+        sizeOrSource: item.sizeOrSource || "-",
+        gradeLevel: item.gradeLevel || "-",
+        barcode: item.barcode?.length ? item.barcode.join(", ") : "-",
+        quantity: item.quantity,
+        date: formatDate(d.dateReceived),
+        receivedBy: d.receivedBy,
+      })),
+    );
+
+    res.status(200).json(paginateArray(formatted, page, limit, all === "true"));
+  } catch (error) {
+    console.error("❌ Delivery report error:", error);
+    res
+      .status(500)
+      .json({ message: "Server error generating delivery report." });
+  }
+};
+
+/* =========================
+   🔁 RETURNS REPORT
+========================= */
+
 export const getReturnsReport = async (req, res) => {
   try {
     const { from, to, page = 1, limit = 20, all } = req.query;
-    const filter = {};
 
-    if (from && to) {
-      filter.dateReturned = {
-        $gte: new Date(from),
-        $lte: new Date(to),
-      };
-    }
-
-    const records = await Return.find(filter)
+    const records = await Return.find(buildDateFilter(from, to, "dateReturned"))
       .sort({ dateReturned: -1 })
       .select(
-        "returnNumber receiptRef transactionRef returnedBy dateReturned items"
+        "returnNumber receiptRef transactionRef returnedBy dateReturned items",
       );
 
-    const formatted = [];
-    records.forEach((r) => {
-      r.items.forEach((item) => {
-        formatted.push({
-          returnNumber: r.returnNumber,
-          receiptRef: r.receiptRef,
-          transactionRef: r.transactionRef || "-",
-          itemId: item.itemId,
-          itemName: item.itemName,
-          sizeOrSource: item.sizeOrSource || "-",
-          gradeLevel: item.gradeLevel || "-",
-          quantity: item.quantity,
-          condition: item.condition || "Good",
-          remarks: item.remarks || "",
-          date: new Date(r.dateReturned).toLocaleDateString(),
-          returnedBy: r.returnedBy,
-        });
-      });
-    });
+    const formatted = records.flatMap((r) =>
+      r.items.map((item) => ({
+        returnNumber: r.returnNumber,
+        receiptRef: r.receiptRef,
+        transactionRef: r.transactionRef || "-",
+        itemId: item.itemId,
+        itemName: item.itemName,
+        itemType: item.itemType || "-", // ✅ ADDED
+        sizeOrSource: item.sizeOrSource || "-",
+        gradeLevel: item.gradeLevel || "-",
+        quantity: item.quantity,
+        condition: item.condition || "Good",
+        remarks: item.remarks || "",
+        date: formatDate(r.dateReturned),
+        returnedBy: r.returnedBy,
+      })),
+    );
 
-    const paged = paginateArray(formatted, page, limit, all === "true");
-
-    res.status(200).json(paged);
+    res.status(200).json(paginateArray(formatted, page, limit, all === "true"));
   } catch (error) {
-    console.error("❌ Error generating returns report:", error);
+    console.error("❌ Returns report error:", error);
     res
       .status(500)
       .json({ message: "Server error generating returns report." });
   }
 };
 
-// 📤 Checkout Report
+/* =========================
+   📤 CHECKOUT REPORT
+========================= */
+
 export const getCheckoutReport = async (req, res) => {
   try {
     const { from, to, page = 1, limit = 20, all } = req.query;
-    const filter = {};
 
-    if (from && to) {
-      filter.createdAt = {
-        $gte: new Date(from),
-        $lte: new Date(to),
-      };
-    }
-
-    const checkouts = await Checkout.find(filter)
+    const checkouts = await Checkout.find(
+      buildDateFilter(from, to, "createdAt"),
+    )
       .sort({ createdAt: -1 })
       .select("transactionNo receiptNo issuedBy createdAt items");
 
-    const formatted = [];
-    checkouts.forEach((c) => {
-      c.items.forEach((item) => {
-        formatted.push({
-          transactionNo: c.transactionNo,
-          receiptNo: c.receiptNo,
-          itemName: item.itemName || "-",
-          sizeOrSource: item.sizeOrSource || "-",
-          gradeLevel: item.gradeLevel || "-",
-          barcode: item.barcode || "-",
-          quantity: item.quantity || 0,
-          date: new Date(c.createdAt).toLocaleDateString(),
-          receivedBy: c.issuedBy || "-", // consistent
-        });
-      });
-    });
+    const formatted = checkouts.flatMap((c) =>
+      c.items.map((item) => ({
+        transactionNo: c.transactionNo,
+        receiptNo: c.receiptNo,
+        itemName: item.itemName || "-",
+        itemType: item.itemType || "-", // ✅ ADDED
+        sizeOrSource: item.sizeOrSource || "-",
+        gradeLevel: item.gradeLevel || "-",
+        barcode: item.barcode || "-",
+        quantity: item.quantity || 0,
+        date: formatDate(c.createdAt),
+        receivedBy: c.issuedBy || "-",
+      })),
+    );
 
-    const paged = paginateArray(formatted, page, limit, all === "true");
-
-    res.status(200).json(paged);
+    res.status(200).json(paginateArray(formatted, page, limit, all === "true"));
   } catch (error) {
-    console.error("❌ Error generating checkout report:", error);
+    console.error("❌ Checkout report error:", error);
     res
       .status(500)
       .json({ message: "Server error generating checkout report." });
   }
 };
 
-// 📊 Current Inventory Report
+/* =========================
+   📊 INVENTORY REPORT
+========================= */
+
 export const getInventoryReport = async (req, res) => {
   try {
     const { page = 1, limit = 20, all } = req.query;
@@ -184,91 +180,92 @@ export const getInventoryReport = async (req, res) => {
       .sort({ itemName: 1 })
       .select("-_id -__v");
 
-    const paged = paginateArray(items, page, limit, all === "true");
-
-    res.status(200).json(paged);
+    res.status(200).json(paginateArray(items, page, limit, all === "true"));
   } catch (error) {
-    console.error("❌ Error generating inventory report:", error);
+    console.error("❌ Inventory report error:", error);
     res
       .status(500)
       .json({ message: "Server error generating inventory report." });
   }
 };
 
-// 🧮 Summary Report (with total stock for date range, including returns)
+/* =========================
+   🧮 SUMMARY REPORT
+========================= */
+
 export const getSummaryReport = async (req, res) => {
   try {
     const { from, to, page = 1, limit = 20, all } = req.query;
+
     const fromDate = from ? new Date(from) : null;
-    const toDate = to ? new Date(to) : new Date();
+    const toDate = new Date(to || new Date());
     toDate.setHours(23, 59, 59, 999);
 
-    // 📦 Deliveries (stock-in)
-    const deliveryAgg = await Delivery.aggregate([
-      {
-        $match: fromDate
-          ? { dateReceived: { $gte: fromDate, $lte: toDate } }
-          : { dateReceived: { $lte: toDate } },
-      },
-      { $unwind: "$items" },
-      {
-        $group: {
-          _id: "$items.itemId",
-          totalDelivered: { $sum: "$items.quantity" },
+    const matchDate = (field) =>
+      fromDate
+        ? { [field]: { $gte: fromDate, $lte: toDate } }
+        : { [field]: { $lte: toDate } };
+
+    // Aggregations
+    const [deliveryAgg, checkoutAgg, returnsAgg] = await Promise.all([
+      Delivery.aggregate([
+        { $match: matchDate("dateReceived") },
+        { $unwind: "$items" },
+        {
+          $group: {
+            _id: "$items.itemId",
+            totalDelivered: { $sum: "$items.quantity" },
+          },
         },
-      },
+      ]),
+      Checkout.aggregate([
+        { $match: matchDate("createdAt") },
+        { $unwind: "$items" },
+        {
+          $group: {
+            _id: "$items.itemId",
+            totalCheckedOut: { $sum: "$items.quantity" },
+          },
+        },
+      ]),
+      Return.aggregate([
+        { $match: matchDate("dateReturned") },
+        { $unwind: "$items" },
+        {
+          $group: {
+            _id: "$items.itemId",
+            totalReturned: { $sum: "$items.quantity" },
+          },
+        },
+      ]),
     ]);
 
-    // 📤 Checkouts (stock-out)
-    const checkoutAgg = await Checkout.aggregate([
-      {
-        $match: fromDate
-          ? { createdAt: { $gte: fromDate, $lte: toDate } }
-          : { createdAt: { $lte: toDate } },
-      },
-      { $unwind: "$items" },
-      {
-        $group: {
-          _id: "$items.itemId",
-          totalCheckedOut: { $sum: "$items.quantity" },
-        },
-      },
-    ]);
-
-    // 🔁 Returns (stock-in)
-    const returnsAgg = await Return.aggregate([
-      {
-        $match: fromDate
-          ? { dateReturned: { $gte: fromDate, $lte: toDate } }
-          : { dateReturned: { $lte: toDate } },
-      },
-      { $unwind: "$items" },
-      {
-        $group: {
-          _id: "$items.itemId",
-          totalReturned: { $sum: "$items.quantity" },
-        },
-      },
-    ]);
+    // Convert to maps (⚡ faster lookup)
+    const deliveryMap = Object.fromEntries(
+      deliveryAgg.map((d) => [d._id, d.totalDelivered]),
+    );
+    const checkoutMap = Object.fromEntries(
+      checkoutAgg.map((c) => [c._id, c.totalCheckedOut]),
+    );
+    const returnMap = Object.fromEntries(
+      returnsAgg.map((r) => [r._id, r.totalReturned]),
+    );
 
     const inventory = await Inventory.find().select(
-      "itemId itemName sizeOrSource gradeLevel quantity"
+      "itemId itemName itemType sizeOrSource gradeLevel quantity",
     );
 
     const summary = inventory.map((inv) => {
-      const delivery = deliveryAgg.find((d) => d._id === inv.itemId);
-      const checkout = checkoutAgg.find((c) => c._id === inv.itemId);
-      const returned = returnsAgg.find((r) => r._id === inv.itemId);
-
-      const totalDelivered = delivery ? delivery.totalDelivered : 0;
-      const totalCheckedOut = checkout ? checkout.totalCheckedOut : 0;
-      const totalReturned = returned ? returned.totalReturned : 0;
+      const totalDelivered = deliveryMap[inv.itemId] || 0;
+      const totalCheckedOut = checkoutMap[inv.itemId] || 0;
+      const totalReturned = returnMap[inv.itemId] || 0;
 
       const netChange = totalDelivered + totalReturned - totalCheckedOut;
 
       return {
         itemId: inv.itemId,
         itemName: inv.itemName,
+        itemType: inv.itemType || "-", // ✅ ADDED
         sizeOrSource: inv.sizeOrSource || "-",
         gradeLevel: inv.gradeLevel || "-",
         totalDelivered,
@@ -293,10 +290,9 @@ export const getSummaryReport = async (req, res) => {
         totalReturned: 0,
         totalCheckedOut: 0,
         totalStockAsOfDate: 0,
-      }
+      },
     );
 
-    // 🔹 Backend pagination on summary rows
     const paged = paginateArray(summary, page, limit, all === "true");
 
     res.status(200).json({
@@ -311,7 +307,7 @@ export const getSummaryReport = async (req, res) => {
       pages: paged.pages,
     });
   } catch (error) {
-    console.error("❌ Error generating summary report:", error);
+    console.error("❌ Summary report error:", error);
     res
       .status(500)
       .json({ message: "Server error generating summary report." });
