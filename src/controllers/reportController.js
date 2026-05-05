@@ -147,14 +147,14 @@ export const getCheckoutReport = async (req, res) => {
     const formatted = checkouts.flatMap((c) =>
       c.items.map((item) => ({
         transactionNo: c.transactionNo,
+        date: formatDate(c.createdAt),
         receiptNo: c.receiptNo,
+        itemType: item.itemType || "-",
         itemName: item.itemName || "-",
-        itemType: item.itemType || "-", // ✅ ADDED
-        sizeOrSource: item.sizeOrSource || "-",
         gradeLevel: item.gradeLevel || "-",
+        sizeOrSource: item.sizeOrSource || "-",
         barcode: item.barcode || "-",
         quantity: item.quantity || 0,
-        date: formatDate(c.createdAt),
         receivedBy: c.issuedBy || "-",
       })),
     );
