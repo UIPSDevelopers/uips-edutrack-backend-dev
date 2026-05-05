@@ -264,10 +264,10 @@ export const getSummaryReport = async (req, res) => {
 
       return {
         itemId: inv.itemId,
+        itemType: inv.itemType || "-",
         itemName: inv.itemName,
-        itemType: inv.itemType || "-", // ✅ ADDED
-        sizeOrSource: inv.sizeOrSource || "-",
         gradeLevel: inv.gradeLevel || "-",
+        sizeOrSource: inv.sizeOrSource || "-",  
         totalDelivered,
         totalReturned,
         totalCheckedOut,
