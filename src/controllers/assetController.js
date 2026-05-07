@@ -56,7 +56,7 @@ export const createSingleAsset = async (req, res) => {
     // INITIAL HISTORY
     await AssetHistory.create({
       assetId: asset._id,
-      actionType: "ASSET CREATED",
+      actionType: "ASSET_CREATED",
 
       oldLocation: null,
       newLocation: locationId || null,
@@ -137,7 +137,7 @@ export const bulkCreateAssets = async (req, res) => {
 
         await AssetHistory.create({
           assetId: asset._id,
-          actionType: "ASSET CREATED",
+          actionType: "ASSET_CREATED",
 
           oldLocation: null,
           newLocation: locationId || null,

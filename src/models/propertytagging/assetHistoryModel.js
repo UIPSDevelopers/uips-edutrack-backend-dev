@@ -12,7 +12,7 @@ const assetHistorySchema = new mongoose.Schema(
 
     actionType: {
       type: String,
-      enum: ["LOCATION_CHANGE", "STATUS_CHANGE", "REMARKS_UPDATE"],
+      enum: ["LOCATION_CHANGE", "STATUS_CHANGE", "REMARKS_UPDATE", "ASSET_CREATED"],
       required: true,
     },
 
