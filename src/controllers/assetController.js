@@ -56,25 +56,34 @@ export const createSingleAsset = async (req, res) => {
 ========================================================= */
 export const bulkCreateAssets = async (req, res) => {
   try {
-    const {
-      categoryId,
-      locationId,
-      assetName,
-      brand,
-      model,
-      purchaseDate,
-      quantity,
-      status = "Active",
-      remarks = "",
-    } = req.body;
+    const { assets } = req.body;
 
-    if (!categoryId || !assetName || !quantity) {
-      return res.status(400).json({ message: "Required fields missing" });
+    if (!assets || !Array.isArray(assets) || assets.length === 0) {
+      return res.status(400).json({ message: "Assets array is required" });
     }
 
-    const assets = [];
+    const createdAssets = [];
 
-    for (let i = 0; i < quantity; i++) {
+    for (const item of assets) {
+      const {
+        categoryId,
+        locationId,
+        assetName,
+        brand,
+        model,
+        purchaseDate,
+        status = "Active",
+        remarks = "",
+      } = item;
+
+      // basic validation per row
+      if (!categoryId || !assetName) {
+        continue; // skip invalid rows instead of failing whole import
+      }
+
+      const category = await Category.findById(categoryId);
+      if (!category) continue;
+
       const asset = await Asset.create({
         serialNo: await generatePropertyTag(categoryId),
         assetName,
@@ -87,10 +96,13 @@ export const bulkCreateAssets = async (req, res) => {
         remarks,
       });
 
-      assets.push(asset);
+      createdAssets.push(asset);
     }
 
-    return res.status(201).json({ assets });
+    return res.status(201).json({
+      count: createdAssets.length,
+      assets: createdAssets,
+    });
   } catch (error) {
     console.error("bulkCreateAssets error:", error);
     return res.status(500).json({ message: error.message });
