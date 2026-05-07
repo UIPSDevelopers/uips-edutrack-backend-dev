@@ -236,3 +236,76 @@ export const getAssetQRCode = async (req, res) => {
     return res.status(500).json({ message: error.message });
   }
 };
+
+/* =========================================================
+   UPDATE ASSET
+========================================================= */
+export const updateAsset = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid asset ID" });
+    }
+
+    const asset = await Asset.findById(id);
+
+    if (!asset) {
+      return res.status(404).json({ message: "Asset not found" });
+    }
+
+    const {
+      categoryId,
+      locationId,
+      assetName,
+      brand,
+      model,
+      purchaseDate,
+      status,
+      remarks,
+    } = req.body;
+
+    // validate category
+    if (categoryId) {
+      const category = await Category.findById(categoryId);
+
+      if (!category) {
+        return res.status(400).json({ message: "Invalid category" });
+      }
+
+      asset.categoryId = categoryId;
+    }
+
+    // validate location
+    if (locationId) {
+      const location = await locationsModel.findById(locationId);
+
+      if (!location) {
+        return res.status(400).json({ message: "Invalid location" });
+      }
+
+      asset.locationId = locationId;
+    }
+
+    // update values
+    if (assetName !== undefined) asset.assetName = assetName;
+    if (brand !== undefined) asset.brand = brand;
+    if (model !== undefined) asset.model = model;
+    if (purchaseDate !== undefined)
+      asset.purchaseDate = purchaseDate;
+
+    if (status !== undefined) asset.status = status;
+
+    if (remarks !== undefined) asset.remarks = remarks;
+
+    await asset.save();
+
+    return res.status(200).json({
+      message: "Asset updated successfully",
+      asset,
+    });
+  } catch (error) {
+    console.error("updateAsset error:", error);
+    return res.status(500).json({ message: error.message });
+  }
+};

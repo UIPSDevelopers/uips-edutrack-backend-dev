@@ -5,6 +5,7 @@ import {
   fetchAssets,
   getAssetById,
   getAssetQRCode,
+  updateAsset,
 } from "../controllers/assetController.js";
 
 const router = express.Router();
@@ -38,5 +39,7 @@ router.get("/assets/:id", getAssetById);
    GET /api/asset/assets/:id/qrcode
 ========================= */
 router.get("/assets/:id/qrcode", getAssetQRCode);
+
+router.put("/assets/:id", updateAsset);
 
 export default router;
