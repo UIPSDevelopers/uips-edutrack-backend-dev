@@ -56,7 +56,7 @@ export const createSingleAsset = async (req, res) => {
     // INITIAL HISTORY
     await AssetHistory.create({
       assetId: asset._id,
-      actionType: "CREATE",
+      actionType: "ASSET CREATED",
 
       oldLocation: null,
       newLocation: locationId || null,
@@ -137,7 +137,7 @@ export const bulkCreateAssets = async (req, res) => {
 
         await AssetHistory.create({
           assetId: asset._id,
-          actionType: "CREATE",
+          actionType: "ASSET CREATED",
 
           oldLocation: null,
           newLocation: locationId || null,
@@ -198,7 +198,7 @@ export const fetchAssets = async (req, res) => {
 };
 
 /* =========================================================
-   GET SINGLE ASSET + SERVICE + HISTORY
+   GET SINGLE ASSET + HISTORY
 ========================================================= */
 export const getAssetById = async (req, res) => {
   try {
@@ -302,7 +302,7 @@ export const getAssetQRCode = async (req, res) => {
 };
 
 /* =========================================================
-   UPDATE ASSET + HISTORY TRACKING
+   UPDATE ASSET + FIELD-BASED HISTORY TRACKING
 ========================================================= */
 export const updateAsset = async (req, res) => {
   try {
@@ -323,41 +323,53 @@ export const updateAsset = async (req, res) => {
 
     const { locationId, status, remarks } = req.body;
 
-    // validate location
-    if (locationId) {
+    const historyLogs = [];
+
+    // LOCATION CHANGE
+    if (locationId && locationId !== oldLocation) {
       const location = await locationsModel.findById(locationId);
       if (!location) {
         return res.status(400).json({ message: "Invalid location" });
       }
+
       asset.locationId = locationId;
+
+      historyLogs.push({
+        assetId: asset._id,
+        actionType: "LOCATION CHANGED",
+        oldLocation,
+        newLocation: locationId,
+      });
     }
 
-    if (status !== undefined) asset.status = status;
-    if (remarks !== undefined) asset.remarks = remarks;
+    // STATUS CHANGE
+    if (status && status !== oldStatus) {
+      asset.status = status;
+
+      historyLogs.push({
+        assetId: asset._id,
+        actionType: "STATUS CHANGED",
+        oldStatus,
+        newStatus: status,
+      });
+    }
+
+    // REMARKS CHANGE
+    if (remarks !== undefined && remarks !== oldRemarks) {
+      asset.remarks = remarks;
+
+      historyLogs.push({
+        assetId: asset._id,
+        actionType: "REMARKS UPDATED",
+        oldRemarks,
+        newRemarks: remarks,
+      });
+    }
 
     await asset.save();
 
-    const newLocation = asset.locationId?.toString() || null;
-
-    const hasChange =
-      oldLocation !== newLocation ||
-      oldStatus !== asset.status ||
-      oldRemarks !== asset.remarks;
-
-    if (hasChange) {
-      await AssetHistory.create({
-        assetId: asset._id,
-        actionType: "UPDATE",
-
-        oldLocation,
-        newLocation,
-
-        oldStatus,
-        newStatus: asset.status,
-
-        oldRemarks,
-        newRemarks: asset.remarks,
-      });
+    if (historyLogs.length > 0) {
+      await AssetHistory.insertMany(historyLogs);
     }
 
     return res.status(200).json({
