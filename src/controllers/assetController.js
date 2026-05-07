@@ -57,15 +57,20 @@ export const createSingleAsset = async (req, res) => {
     await AssetHistory.create({
       assetId: asset._id,
       actionType: "ASSET_CREATED",
-
-      oldLocation: null,
-      newLocation: locationId || null,
-
-      oldStatus: null,
-      newStatus: status,
-
-      oldRemarks: null,
-      newRemarks: remarks,
+      changes: {
+        location: {
+          old: null,
+          new: locationId || null,
+        },
+        status: {
+          old: null,
+          new: status,
+        },
+        remarks: {
+          old: null,
+          new: remarks,
+        },
+      },
     });
 
     return res.status(201).json({ asset });
@@ -220,15 +225,8 @@ export const getAssetById = async (req, res) => {
       serviceDate: -1,
     });
 
-    const history = await AssetHistory.find({ assetId: id })
-      .populate("oldLocation", "name")
-      .populate("newLocation", "name")
-      .sort({ createdAt: -1 });
-
-    return res.status(200).json({
-      asset,
-      services,
-      history,
+    const history = await AssetHistory.find({ assetId: id }).sort({
+      createdAt: -1,
     });
   } catch (error) {
     console.error("getAssetById error:", error);
@@ -317,21 +315,17 @@ export const updateAsset = async (req, res) => {
       return res.status(404).json({ message: "Asset not found" });
     }
 
-    const oldLocation = asset.locationId || null;
+    const oldLocation = asset.locationId ? asset.locationId.toString() : null;
     const oldStatus = asset.status;
     const oldRemarks = asset.remarks || "";
 
     const { locationId, status, remarks } = req.body;
 
-    let history = {
-      assetId: asset._id,
-      changedBy: "System",
-      changes: {},
-    };
+    const historyRecords = [];
 
-    let hasChange = false;
-
-    // LOCATION
+    // ========================
+    // LOCATION CHANGE
+    // ========================
     if (locationId && String(locationId) !== String(oldLocation)) {
       const location = await locationsModel.findById(locationId);
       if (!location) {
@@ -340,51 +334,58 @@ export const updateAsset = async (req, res) => {
 
       asset.locationId = locationId;
 
-      history.actionType = "LOCATION_CHANGE";
-      history.changes.location = {
-        old: oldLocation,
-        new: locationId,
-      };
-
-      hasChange = true;
+      historyRecords.push({
+        assetId: asset._id,
+        actionType: "LOCATION_CHANGE",
+        changes: {
+          location: {
+            old: oldLocation,
+            new: locationId,
+          },
+        },
+      });
     }
 
-    // STATUS
-    if (status && status !== oldStatus) {
+    // ========================
+    // STATUS CHANGE
+    // ========================
+    if (status !== undefined && status !== oldStatus) {
       asset.status = status;
 
-      history.actionType = hasChange
-        ? "STATUS_CHANGE"
-        : "STATUS_CHANGE";
-
-      history.changes.status = {
-        old: oldStatus,
-        new: status,
-      };
-
-      hasChange = true;
+      historyRecords.push({
+        assetId: asset._id,
+        actionType: "STATUS_CHANGE",
+        changes: {
+          status: {
+            old: oldStatus,
+            new: status,
+          },
+        },
+      });
     }
 
-    // REMARKS
+    // ========================
+    // REMARKS CHANGE
+    // ========================
     if (remarks !== undefined && remarks !== oldRemarks) {
       asset.remarks = remarks;
 
-      history.actionType = hasChange
-        ? history.actionType
-        : "REMARKS_CHANGE";
-
-      history.changes.remarks = {
-        old: oldRemarks,
-        new: remarks,
-      };
-
-      hasChange = true;
+      historyRecords.push({
+        assetId: asset._id,
+        actionType: "REMARKS_CHANGE",
+        changes: {
+          remarks: {
+            old: oldRemarks,
+            new: remarks,
+          },
+        },
+      });
     }
 
     await asset.save();
 
-    if (hasChange) {
-      await AssetHistory.create(history);
+    if (historyRecords.length > 0) {
+      await AssetHistory.insertMany(historyRecords);
     }
 
     return res.status(200).json({

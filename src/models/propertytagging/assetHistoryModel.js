@@ -19,13 +19,12 @@ const assetHistorySchema = new mongoose.Schema(
       required: true,
     },
 
-    // Who did it
     changedBy: {
       type: String,
       default: "System",
     },
 
-    // Store structured changes (IMPORTANT FIX)
+    // 🔥 CLEAN STRUCTURED CHANGE LOG
     changes: {
       location: {
         old: {
@@ -54,6 +53,4 @@ const assetHistorySchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-const AssetHistory = mongoose.model("AssetHistory", assetHistorySchema);
-
-export default AssetHistory;
+export default mongoose.model("AssetHistory", assetHistorySchema);
