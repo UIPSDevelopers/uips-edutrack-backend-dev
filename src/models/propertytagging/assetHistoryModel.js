@@ -12,7 +12,12 @@ const assetHistorySchema = new mongoose.Schema(
 
     actionType: {
       type: String,
-      enum: ["LOCATION_CHANGE", "STATUS_CHANGE", "REMARKS_UPDATE", "ASSET_CREATED"],
+      enum: [
+        "LOCATION_CHANGE",
+        "STATUS_CHANGE",
+        "REMARKS_UPDATE",
+        "ASSET_CREATED",
+      ],
       required: true,
     },
 
@@ -30,15 +35,24 @@ const assetHistorySchema = new mongoose.Schema(
       type: String,
       default: "System",
     },
+
+    oldLocation: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Location",
+      default: null,
+    },
+
+    newLocation: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Location",
+      default: null,
+    },
   },
   {
     timestamps: true,
   },
 );
 
-const AssetHistory = mongoose.model(
-  "AssetHistory",
-  assetHistorySchema,
-);
+const AssetHistory = mongoose.model("AssetHistory", assetHistorySchema);
 
 export default AssetHistory;
