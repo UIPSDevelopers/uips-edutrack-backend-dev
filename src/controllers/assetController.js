@@ -317,16 +317,22 @@ export const updateAsset = async (req, res) => {
       return res.status(404).json({ message: "Asset not found" });
     }
 
-    const oldLocation = asset.locationId?.toString() || null;
+    const oldLocation = asset.locationId || null;
     const oldStatus = asset.status;
     const oldRemarks = asset.remarks || "";
 
     const { locationId, status, remarks } = req.body;
 
-    const historyLogs = [];
+    let history = {
+      assetId: asset._id,
+      changedBy: "System",
+      changes: {},
+    };
 
-    // LOCATION CHANGE
-    if (locationId && locationId !== oldLocation) {
+    let hasChange = false;
+
+    // LOCATION
+    if (locationId && String(locationId) !== String(oldLocation)) {
       const location = await locationsModel.findById(locationId);
       if (!location) {
         return res.status(400).json({ message: "Invalid location" });
@@ -334,42 +340,51 @@ export const updateAsset = async (req, res) => {
 
       asset.locationId = locationId;
 
-      historyLogs.push({
-        assetId: asset._id,
-        actionType: "LOCATION_CHANGE",
-        oldLocation,
-        newLocation: locationId,
-      });
+      history.actionType = "LOCATION_CHANGE";
+      history.changes.location = {
+        old: oldLocation,
+        new: locationId,
+      };
+
+      hasChange = true;
     }
 
-    // STATUS CHANGE
+    // STATUS
     if (status && status !== oldStatus) {
       asset.status = status;
 
-      historyLogs.push({
-        assetId: asset._id,
-        actionType: "STATUS_CHANGE",
-        oldStatus,
-        newStatus: status,
-      });
+      history.actionType = hasChange
+        ? "STATUS_CHANGE"
+        : "STATUS_CHANGE";
+
+      history.changes.status = {
+        old: oldStatus,
+        new: status,
+      };
+
+      hasChange = true;
     }
 
-    // REMARKS CHANGE
+    // REMARKS
     if (remarks !== undefined && remarks !== oldRemarks) {
       asset.remarks = remarks;
 
-      historyLogs.push({
-        assetId: asset._id,
-        actionType: "REMARKS_UPDATE",
-        oldRemarks,
-        newRemarks: remarks,
-      });
+      history.actionType = hasChange
+        ? history.actionType
+        : "REMARKS_CHANGE";
+
+      history.changes.remarks = {
+        old: oldRemarks,
+        new: remarks,
+      };
+
+      hasChange = true;
     }
 
     await asset.save();
 
-    if (historyLogs.length > 0) {
-      await AssetHistory.insertMany(historyLogs);
+    if (hasChange) {
+      await AssetHistory.create(history);
     }
 
     return res.status(200).json({

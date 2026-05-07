@@ -1,5 +1,3 @@
-// models/propertytagging/assetHistoryModel.js
-
 import mongoose from "mongoose";
 
 const assetHistorySchema = new mongoose.Schema(
@@ -13,44 +11,47 @@ const assetHistorySchema = new mongoose.Schema(
     actionType: {
       type: String,
       enum: [
+        "ASSET_CREATED",
         "LOCATION_CHANGE",
         "STATUS_CHANGE",
-        "REMARKS_UPDATE",
-        "ASSET_CREATED",
+        "REMARKS_CHANGE",
       ],
       required: true,
     },
 
-    oldValue: {
-      type: String,
-      default: "",
-    },
-
-    newValue: {
-      type: String,
-      default: "",
-    },
-
+    // Who did it
     changedBy: {
       type: String,
       default: "System",
     },
 
-    oldLocation: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Location",
-      default: null,
-    },
+    // Store structured changes (IMPORTANT FIX)
+    changes: {
+      location: {
+        old: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Location",
+          default: null,
+        },
+        new: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Location",
+          default: null,
+        },
+      },
 
-    newLocation: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Location",
-      default: null,
+      status: {
+        old: { type: String, default: "" },
+        new: { type: String, default: "" },
+      },
+
+      remarks: {
+        old: { type: String, default: "" },
+        new: { type: String, default: "" },
+      },
     },
   },
-  {
-    timestamps: true,
-  },
+  { timestamps: true },
 );
 
 const AssetHistory = mongoose.model("AssetHistory", assetHistorySchema);
