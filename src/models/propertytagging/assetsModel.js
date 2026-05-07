@@ -24,8 +24,8 @@ const assetSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["Active", "Needs Repair", "Disposed"],
-      default: "Active",
+      enum: ["ACTIVE", "BROKEN", "DISPOSED"],
+      default: "ACTIVE",
     },
     purchaseDate: {
       type: Date,
