@@ -26,27 +26,18 @@ export const createSingleAsset = async (req, res) => {
     } = req.body;
 
     if (!categoryId || !assetName) {
-      return res.status(400).json({
-        message: "Required fields missing",
-      });
+      return res.status(400).json({ message: "Required fields missing" });
     }
 
     const category = await Category.findById(categoryId);
-
     if (!category) {
-      return res.status(400).json({
-        message: "Invalid category",
-      });
+      return res.status(400).json({ message: "Invalid category" });
     }
 
-    // validate location if provided
     if (locationId) {
       const location = await locationsModel.findById(locationId);
-
       if (!location) {
-        return res.status(400).json({
-          message: "Invalid location",
-        });
+        return res.status(400).json({ message: "Invalid location" });
       }
     }
 
@@ -62,27 +53,25 @@ export const createSingleAsset = async (req, res) => {
       remarks,
     });
 
-    // create initial history
+    // INITIAL HISTORY
     await AssetHistory.create({
       assetId: asset._id,
-      action: "ASSET CREATED",
+      actionType: "CREATE",
+
       oldLocation: null,
       newLocation: locationId || null,
+
       oldStatus: null,
       newStatus: status,
+
       oldRemarks: null,
       newRemarks: remarks,
     });
 
-    return res.status(201).json({
-      asset,
-    });
+    return res.status(201).json({ asset });
   } catch (error) {
     console.error("createSingleAsset error:", error);
-
-    return res.status(500).json({
-      message: error.message,
-    });
+    return res.status(500).json({ message: error.message });
   }
 };
 
@@ -93,18 +82,16 @@ export const bulkCreateAssets = async (req, res) => {
   try {
     const { assets } = req.body;
 
-    if (!assets || !Array.isArray(assets) || assets.length === 0) {
-      return res.status(400).json({
-        message: "Assets array is required",
-      });
+    if (!Array.isArray(assets) || assets.length === 0) {
+      return res.status(400).json({ message: "Assets array is required" });
     }
 
     const createdAssets = [];
     const errors = [];
 
-    for (let index = 0; index < assets.length; index++) {
+    for (let i = 0; i < assets.length; i++) {
       try {
-        const item = assets[index];
+        const item = assets[i];
 
         const {
           categoryId,
@@ -117,37 +104,21 @@ export const bulkCreateAssets = async (req, res) => {
           remarks = "",
         } = item;
 
-        // validation
         if (!categoryId || !assetName) {
-          errors.push({
-            row: index + 1,
-            error: "Missing required fields",
-          });
-
+          errors.push({ row: i + 1, error: "Missing required fields" });
           continue;
         }
 
         const category = await Category.findById(categoryId);
-
         if (!category) {
-          errors.push({
-            row: index + 1,
-            error: "Invalid category",
-          });
-
+          errors.push({ row: i + 1, error: "Invalid category" });
           continue;
         }
 
-        // validate location if provided
         if (locationId) {
           const location = await locationsModel.findById(locationId);
-
           if (!location) {
-            errors.push({
-              row: index + 1,
-              error: "Invalid location",
-            });
-
+            errors.push({ row: i + 1, error: "Invalid location" });
             continue;
           }
         }
@@ -164,24 +135,23 @@ export const bulkCreateAssets = async (req, res) => {
           remarks,
         });
 
-        // create initial history
         await AssetHistory.create({
           assetId: asset._id,
-          action: "ASSET CREATED",
+          actionType: "CREATE",
+
           oldLocation: null,
           newLocation: locationId || null,
+
           oldStatus: null,
           newStatus: status,
+
           oldRemarks: null,
           newRemarks: remarks,
         });
 
         createdAssets.push(asset);
       } catch (err) {
-        errors.push({
-          row: index + 1,
-          error: err.message,
-        });
+        errors.push({ row: i + 1, error: err.message });
       }
     }
 
@@ -193,10 +163,7 @@ export const bulkCreateAssets = async (req, res) => {
     });
   } catch (error) {
     console.error("bulkCreateAssets error:", error);
-
-    return res.status(500).json({
-      message: error.message,
-    });
+    return res.status(500).json({ message: error.message });
   }
 };
 
@@ -210,30 +177,10 @@ export const fetchAssets = async (req, res) => {
     const query = search
       ? {
           $or: [
-            {
-              assetName: {
-                $regex: search,
-                $options: "i",
-              },
-            },
-            {
-              serialNo: {
-                $regex: search,
-                $options: "i",
-              },
-            },
-            {
-              brand: {
-                $regex: search,
-                $options: "i",
-              },
-            },
-            {
-              model: {
-                $regex: search,
-                $options: "i",
-              },
-            },
+            { assetName: { $regex: search, $options: "i" } },
+            { serialNo: { $regex: search, $options: "i" } },
+            { brand: { $regex: search, $options: "i" } },
+            { model: { $regex: search, $options: "i" } },
           ],
         }
       : {};
@@ -243,29 +190,22 @@ export const fetchAssets = async (req, res) => {
       .populate("locationId", "name building floor")
       .sort({ createdAt: -1 });
 
-    return res.status(200).json({
-      assets,
-    });
+    return res.status(200).json({ assets });
   } catch (error) {
     console.error("fetchAssets error:", error);
-
-    return res.status(500).json({
-      message: error.message,
-    });
+    return res.status(500).json({ message: error.message });
   }
 };
 
 /* =========================================================
-   GET SINGLE ASSET + SERVICE HISTORY + CHANGE HISTORY
+   GET SINGLE ASSET + SERVICE + HISTORY
 ========================================================= */
 export const getAssetById = async (req, res) => {
   try {
     const { id } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
-        message: "Invalid asset ID",
-      });
+      return res.status(400).json({ message: "Invalid asset ID" });
     }
 
     const asset = await Asset.findById(id)
@@ -273,25 +213,17 @@ export const getAssetById = async (req, res) => {
       .populate("locationId", "name building floor");
 
     if (!asset) {
-      return res.status(404).json({
-        message: "Asset not found",
-      });
+      return res.status(404).json({ message: "Asset not found" });
     }
 
-    const services = await AssetService.find({
-      assetId: id,
-    }).sort({
+    const services = await AssetService.find({ assetId: id }).sort({
       serviceDate: -1,
     });
 
-    const history = await AssetHistory.find({
-      assetId: id,
-    })
+    const history = await AssetHistory.find({ assetId: id })
       .populate("oldLocation", "name")
       .populate("newLocation", "name")
-      .sort({
-        createdAt: -1,
-      });
+      .sort({ createdAt: -1 });
 
     return res.status(200).json({
       asset,
@@ -300,20 +232,16 @@ export const getAssetById = async (req, res) => {
     });
   } catch (error) {
     console.error("getAssetById error:", error);
-
-    return res.status(500).json({
-      message: error.message,
-    });
+    return res.status(500).json({ message: error.message });
   }
 };
 
 /* =========================================================
-   ADD SERVICE TO ASSET
+   ADD SERVICE
 ========================================================= */
 export const addAssetService = async (req, res) => {
   try {
     const { id } = req.params;
-
     const {
       serviceType,
       description = "",
@@ -323,17 +251,12 @@ export const addAssetService = async (req, res) => {
     } = req.body;
 
     if (!serviceType) {
-      return res.status(400).json({
-        message: "Service type is required",
-      });
+      return res.status(400).json({ message: "Service type is required" });
     }
 
     const asset = await Asset.findById(id);
-
     if (!asset) {
-      return res.status(404).json({
-        message: "Asset not found",
-      });
+      return res.status(404).json({ message: "Asset not found" });
     }
 
     const service = await AssetService.create({
@@ -348,161 +271,92 @@ export const addAssetService = async (req, res) => {
     return res.status(201).json(service);
   } catch (error) {
     console.error("addAssetService error:", error);
-
-    return res.status(500).json({
-      message: error.message,
-    });
+    return res.status(500).json({ message: error.message });
   }
 };
 
 /* =========================================================
-   GET QR CODE (IMAGE BUFFER)
+   QR CODE
 ========================================================= */
 export const getAssetQRCode = async (req, res) => {
   try {
     const { id } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
-        message: "Invalid asset ID",
-      });
+      return res.status(400).json({ message: "Invalid asset ID" });
     }
 
     const asset = await Asset.findById(id);
-
     if (!asset) {
-      return res.status(404).json({
-        message: "Asset not found",
-      });
+      return res.status(404).json({ message: "Asset not found" });
     }
 
     const qrImage = await generateQRCodeBuffer(asset._id);
 
     res.setHeader("Content-Type", "image/png");
-
     return res.send(qrImage);
   } catch (error) {
     console.error("getAssetQRCode error:", error);
-
-    return res.status(500).json({
-      message: error.message,
-    });
+    return res.status(500).json({ message: error.message });
   }
 };
 
 /* =========================================================
-   UPDATE ASSET
+   UPDATE ASSET + HISTORY TRACKING
 ========================================================= */
 export const updateAsset = async (req, res) => {
   try {
     const { id } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
-        message: "Invalid asset ID",
-      });
+      return res.status(400).json({ message: "Invalid asset ID" });
     }
 
     const asset = await Asset.findById(id);
-
     if (!asset) {
-      return res.status(404).json({
-        message: "Asset not found",
-      });
+      return res.status(404).json({ message: "Asset not found" });
     }
 
-    // store old values for history
-    const oldLocation = asset.locationId ? asset.locationId.toString() : null;
-
-    const oldStatus = asset.status || null;
+    const oldLocation = asset.locationId?.toString() || null;
+    const oldStatus = asset.status;
     const oldRemarks = asset.remarks || "";
 
-    const {
-      categoryId,
-      locationId,
-      assetName,
-      brand,
-      model,
-      purchaseDate,
-      status,
-      remarks,
-    } = req.body;
-
-    // validate category
-    if (categoryId) {
-      const category = await Category.findById(categoryId);
-
-      if (!category) {
-        return res.status(400).json({
-          message: "Invalid category",
-        });
-      }
-
-      asset.categoryId = categoryId;
-    }
+    const { locationId, status, remarks } = req.body;
 
     // validate location
     if (locationId) {
       const location = await locationsModel.findById(locationId);
-
       if (!location) {
-        return res.status(400).json({
-          message: "Invalid location",
-        });
+        return res.status(400).json({ message: "Invalid location" });
       }
-
       asset.locationId = locationId;
     }
 
-    // update fields
-    if (assetName !== undefined) {
-      asset.assetName = assetName;
-    }
-
-    if (brand !== undefined) {
-      asset.brand = brand;
-    }
-
-    if (model !== undefined) {
-      asset.model = model;
-    }
-
-    if (purchaseDate !== undefined) {
-      asset.purchaseDate = purchaseDate;
-    }
-
-    if (status !== undefined) {
-      asset.status = status;
-    }
-
-    if (remarks !== undefined) {
-      asset.remarks = remarks;
-    }
+    if (status !== undefined) asset.status = status;
+    if (remarks !== undefined) asset.remarks = remarks;
 
     await asset.save();
 
-    // check changes
-    const hasLocationChange =
-      oldLocation !== (asset.locationId ? asset.locationId.toString() : null);
+    const newLocation = asset.locationId?.toString() || null;
 
-    const hasStatusChange = oldStatus !== asset.status;
+    const hasChange =
+      oldLocation !== newLocation ||
+      oldStatus !== asset.status ||
+      oldRemarks !== asset.remarks;
 
-    const hasRemarksChange = oldRemarks !== (asset.remarks || "");
-
-    // create history only if something changed
-    if (hasLocationChange || hasStatusChange || hasRemarksChange) {
+    if (hasChange) {
       await AssetHistory.create({
         assetId: asset._id,
-        action: "ASSET UPDATED",
+        actionType: "UPDATE",
 
         oldLocation,
-        newLocation: asset.locationId || null,
+        newLocation,
 
         oldStatus,
         newStatus: asset.status,
 
         oldRemarks,
-        newRemarks: asset.remarks || "",
+        newRemarks: asset.remarks,
       });
     }
 
@@ -512,9 +366,6 @@ export const updateAsset = async (req, res) => {
     });
   } catch (error) {
     console.error("updateAsset error:", error);
-
-    return res.status(500).json({
-      message: error.message,
-    });
+    return res.status(500).json({ message: error.message });
   }
 };
