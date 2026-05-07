@@ -228,6 +228,12 @@ export const getAssetById = async (req, res) => {
     const history = await AssetHistory.find({ assetId: id }).sort({
       createdAt: -1,
     });
+
+    return res.status(200).json({
+      asset,
+      services,
+      history,
+    });
   } catch (error) {
     console.error("getAssetById error:", error);
     return res.status(500).json({ message: error.message });
