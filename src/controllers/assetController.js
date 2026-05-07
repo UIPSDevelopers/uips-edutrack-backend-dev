@@ -336,7 +336,7 @@ export const updateAsset = async (req, res) => {
 
       historyLogs.push({
         assetId: asset._id,
-        actionType: "LOCATION CHANGED",
+        actionType: "LOCATION_CHANGE",
         oldLocation,
         newLocation: locationId,
       });
@@ -348,7 +348,7 @@ export const updateAsset = async (req, res) => {
 
       historyLogs.push({
         assetId: asset._id,
-        actionType: "STATUS CHANGED",
+        actionType: "STATUS_CHANGE",
         oldStatus,
         newStatus: status,
       });
@@ -360,7 +360,7 @@ export const updateAsset = async (req, res) => {
 
       historyLogs.push({
         assetId: asset._id,
-        actionType: "REMARKS UPDATED",
+        actionType: "REMARKS_UPDATE",
         oldRemarks,
         newRemarks: remarks,
       });
