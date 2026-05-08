@@ -34,11 +34,16 @@ export const createSingleAsset = async (req, res) => {
       return res.status(400).json({ message: "Invalid category" });
     }
 
+    let locationName = null;
+
     if (locationId) {
       const location = await locationsModel.findById(locationId);
+
       if (!location) {
         return res.status(400).json({ message: "Invalid location" });
       }
+
+      locationName = location.name;
     }
 
     const asset = await Asset.create({
@@ -60,7 +65,7 @@ export const createSingleAsset = async (req, res) => {
       changes: {
         location: {
           old: null,
-          new: locationId || null,
+          new: locationName || null,
         },
         status: {
           old: null,
@@ -120,12 +125,16 @@ export const bulkCreateAssets = async (req, res) => {
           continue;
         }
 
+        let locationName = null;
+
         if (locationId) {
           const location = await locationsModel.findById(locationId);
+
           if (!location) {
-            errors.push({ row: i + 1, error: "Invalid location" });
-            continue;
+            return res.status(400).json({ message: "Invalid location" });
           }
+
+          locationName = location.name;
         }
 
         const asset = await Asset.create({
@@ -146,7 +155,7 @@ export const bulkCreateAssets = async (req, res) => {
           changes: {
             location: {
               old: null,
-              new: locationId || null,
+              new: locationName || null,
             },
             status: {
               old: null,
@@ -326,7 +335,13 @@ export const updateAsset = async (req, res) => {
       return res.status(404).json({ message: "Asset not found" });
     }
 
-    const oldLocation = asset.locationId ? asset.locationId.toString() : null;
+    let oldLocation = "Unassigned";
+
+    if (asset.locationId) {
+      const oldLocationData = await locationsModel.findById(asset.locationId);
+
+      oldLocation = oldLocationData?.name || "Unknown Location";
+    }
     const oldStatus = asset.status;
     const oldRemarks = asset.remarks || "";
 
@@ -337,7 +352,7 @@ export const updateAsset = async (req, res) => {
     // ========================
     // LOCATION CHANGE
     // ========================
-    if (locationId && String(locationId) !== String(oldLocation)) {
+    if (locationId) {
       const location = await locationsModel.findById(locationId);
       if (!location) {
         return res.status(400).json({ message: "Invalid location" });
@@ -351,7 +366,7 @@ export const updateAsset = async (req, res) => {
         changes: {
           location: {
             old: oldLocation,
-            new: locationId,
+            new: location.name,
           },
         },
       });
