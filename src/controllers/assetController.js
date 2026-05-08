@@ -143,15 +143,20 @@ export const bulkCreateAssets = async (req, res) => {
         await AssetHistory.create({
           assetId: asset._id,
           actionType: "ASSET_CREATED",
-
-          oldLocation: null,
-          newLocation: locationId || null,
-
-          oldStatus: null,
-          newStatus: status,
-
-          oldRemarks: null,
-          newRemarks: remarks,
+          changes: {
+            location: {
+              old: null,
+              new: locationId || null,
+            },
+            status: {
+              old: null,
+              new: status,
+            },
+            remarks: {
+              old: null,
+              new: remarks,
+            },
+          },
         });
 
         createdAssets.push(asset);
