@@ -28,13 +28,12 @@ const assetHistorySchema = new mongoose.Schema(
     changes: {
       location: {
         old: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "Location",
+          type: String,
           default: null,
         },
+
         new: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "Location",
+          type: String,
           default: null,
         },
       },
