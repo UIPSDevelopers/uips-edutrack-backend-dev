@@ -423,3 +423,62 @@ export const updateAsset = async (req, res) => {
     return res.status(500).json({ message: error.message });
   }
 };
+
+export const getAssetReports = async (req, res) => {
+  try {
+    const { from, to, type } = req.query;
+
+    const dateFilter = {};
+
+    if (from && to) {
+      dateFilter.createdAt = {
+        $gte: new Date(from),
+        $lte: new Date(to),
+      };
+    }
+
+    // ======================
+    // HISTORY REPORTS
+    // ======================
+    if (type === "MOVEMENT") {
+      const data = await AssetHistory.find({
+        actionType: "LOCATION_CHANGE",
+        ...dateFilter,
+      }).populate("assetId", "assetName serialNo");
+
+      return res.json({ data });
+    }
+
+    if (type === "STATUS") {
+      const data = await AssetHistory.find({
+        actionType: "STATUS_CHANGE",
+        ...dateFilter,
+      }).populate("assetId", "assetName serialNo");
+
+      return res.json({ data });
+    }
+
+    // ======================
+    // SERVICE REPORT
+    // ======================
+    if (type === "SERVICE") {
+      const data = await AssetService.find(dateFilter).populate(
+        "assetId",
+        "assetName serialNo",
+      );
+
+      return res.json({ data });
+    }
+
+    // ======================
+    // DEFAULT: ASSET SUMMARY
+    // ======================
+    const data = await Asset.find()
+      .populate("categoryId", "name")
+      .populate("locationId", "name");
+
+    return res.json({ data });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};

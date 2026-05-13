@@ -140,4 +140,61 @@ export const getCheckoutById = async (req, res) => {
   }
 };
 
+// ❌ Delete checkout + restore inventory stock
+export const deleteCheckout = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const ref = req.params.id.trim();
+
+    // 🔍 Find checkout
+    const checkout = await Checkout.findOne({
+      $or: [
+        { receiptNo: ref },
+        { checkoutId: ref },
+        { transactionNo: ref },
+      ],
+    }).session(session);
+
+    if (!checkout) {
+      throw new Error("Checkout not found.");
+    }
+
+    // ♻️ Restore inventory quantities
+    for (const item of checkout.items) {
+      const inventoryItem = await Inventory.findOne({
+        itemId: item.itemId,
+      }).session(session);
+
+      if (inventoryItem) {
+        inventoryItem.quantity =
+          (inventoryItem.quantity || 0) + item.quantity;
+
+        await inventoryItem.save({ session });
+      }
+    }
+
+    // 🗑 Delete checkout
+    await Checkout.deleteOne({ _id: checkout._id }).session(session);
+
+    // ✅ Commit transaction
+    await session.commitTransaction();
+    session.endSession();
+
+    res.status(200).json({
+      message: "✅ Checkout deleted and inventory restored successfully.",
+    });
+  } catch (error) {
+    console.error("❌ Error deleting checkout:", error.message);
+
+    await session.abortTransaction();
+    session.endSession();
+
+    res.status(400).json({
+      message: error.message || "Server error while deleting checkout.",
+    });
+  }
+};
+
 
