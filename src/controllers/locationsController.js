@@ -156,3 +156,20 @@ export const deleteLocation = async (req, res) => {
     });
   }
 };
+
+export const getAllLocationsNoPagination = async (req, res) => {
+  try {
+    const locations = await locationsModel
+      .find()
+      .sort({ name: 1 });
+
+    return res.status(200).json({
+      data: locations,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Server Error",
+      error: error.message,
+    });
+  }
+};
