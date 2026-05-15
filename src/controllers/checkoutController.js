@@ -29,9 +29,24 @@ export const addCheckout = async (req, res) => {
 
     // ✅ Generate custom IDs
     const checkoutId = await generateCheckoutId(session);
-    const transactionCount = await Checkout.countDocuments().session(session);
-    const nextNum = String(transactionCount + 1).padStart(6, "0");
+    // ✅ Generate transaction number safely
     const date = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+
+    // Find latest transaction
+    const lastTransaction = await Checkout.findOne({
+      transactionNo: new RegExp(`^TXN-${date}`),
+    })
+      .sort({ createdAt: -1 })
+      .session(session);
+
+    let nextNum = "000001";
+
+    if (lastTransaction) {
+      const lastNum = parseInt(lastTransaction.transactionNo.split("-")[2]);
+
+      nextNum = String(lastNum + 1).padStart(6, "0");
+    }
+
     const transactionNo = `TXN-${date}-${nextNum}`;
 
     const enrichedItems = [];
@@ -39,18 +54,18 @@ export const addCheckout = async (req, res) => {
     // ✅ Validate & deduct stock
     for (const item of items) {
       const existing = await Inventory.findOne({ itemId: item.itemId }).session(
-        session
+        session,
       );
 
       if (!existing) {
         throw new Error(
-          `❌ Item ${item.itemName} (ID: ${item.itemId}) not found in inventory.`
+          `❌ Item ${item.itemName} (ID: ${item.itemId}) not found in inventory.`,
         );
       }
 
       if ((existing.quantity || 0) < item.quantity) {
         throw new Error(
-          `⚠️ Not enough stock for ${item.itemName}. Available: ${existing.quantity}, requested: ${item.quantity}.`
+          `⚠️ Not enough stock for ${item.itemName}. Available: ${existing.quantity}, requested: ${item.quantity}.`,
         );
       }
 
@@ -120,11 +135,7 @@ export const getCheckoutById = async (req, res) => {
     console.log("🧾 Searching checkout by receipt:", ref);
 
     const checkout = await Checkout.findOne({
-      $or: [
-        { receiptNo: ref },
-        { checkoutId: ref },
-        { transactionNo: ref },
-      ],
+      $or: [{ receiptNo: ref }, { checkoutId: ref }, { transactionNo: ref }],
     }).select("-_id -__v");
 
     if (!checkout) {
@@ -150,11 +161,7 @@ export const deleteCheckout = async (req, res) => {
 
     // 🔍 Find checkout
     const checkout = await Checkout.findOne({
-      $or: [
-        { receiptNo: ref },
-        { checkoutId: ref },
-        { transactionNo: ref },
-      ],
+      $or: [{ receiptNo: ref }, { checkoutId: ref }, { transactionNo: ref }],
     }).session(session);
 
     if (!checkout) {
@@ -168,8 +175,7 @@ export const deleteCheckout = async (req, res) => {
       }).session(session);
 
       if (inventoryItem) {
-        inventoryItem.quantity =
-          (inventoryItem.quantity || 0) + item.quantity;
+        inventoryItem.quantity = (inventoryItem.quantity || 0) + item.quantity;
 
         await inventoryItem.save({ session });
       }
@@ -196,5 +202,3 @@ export const deleteCheckout = async (req, res) => {
     });
   }
 };
-
-
