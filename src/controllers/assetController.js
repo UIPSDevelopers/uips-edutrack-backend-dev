@@ -482,3 +482,75 @@ export const getAssetReports = async (req, res) => {
     return res.status(500).json({ message: error.message });
   }
 };
+
+/* =========================================================
+   ASSET STATS (for dashboard)
+   GET /api/reports/asset/stats
+========================================================= */
+export const getAssetStats = async (req, res) => {
+  try {
+    // total assets
+    const total = await Asset.countDocuments();
+
+    // by status
+    const statusAgg = await Asset.aggregate([
+      { $group: { _id: "$status", count: { $sum: 1 } } },
+    ]);
+
+    // by categoryId
+    const categoryAgg = await Asset.aggregate([
+      { $group: { _id: "$categoryId", count: { $sum: 1 } } },
+    ]);
+
+    // by locationId
+    const locationAgg = await Asset.aggregate([
+      { $group: { _id: "$locationId", count: { $sum: 1 } } },
+    ]);
+
+    // resolve category names
+    const categoryIds = categoryAgg.map((c) => c._id).filter(Boolean);
+    const categories = categoryIds.length
+      ? await Category.find({ _id: { $in: categoryIds } }).select("name")
+      : [];
+    const categoryMap = Object.fromEntries(
+      categories.map((c) => [String(c._id), c.name]),
+    );
+
+    const categoriesResult = categoryAgg.map((c) => ({
+      _id: String(c._id),
+      name: categoryMap[String(c._id)] || "Uncategorized",
+      count: c.count,
+    }));
+
+    // resolve location names
+    const locationIds = locationAgg.map((l) => l._id).filter(Boolean);
+    const locations = locationIds.length
+      ? await locationsModel.find({ _id: { $in: locationIds } }).select("name building floor")
+      : [];
+    const locationMap = Object.fromEntries(
+      locations.map((l) => [String(l._id), l.name]),
+    );
+
+    const locationsResult = locationAgg.map((l) => ({
+      _id: String(l._id),
+      name: locationMap[String(l._id)] || "Unassigned",
+      count: l.count,
+    }));
+
+    // normalize status result into object
+    const byStatus = statusAgg.reduce((acc, cur) => {
+      acc[cur._id || "UNKNOWN"] = cur.count;
+      return acc;
+    }, {});
+
+    return res.status(200).json({
+      total,
+      byStatus,
+      byCategory: categoriesResult,
+      byLocation: locationsResult,
+    });
+  } catch (error) {
+    console.error("getAssetStats error:", error);
+    return res.status(500).json({ message: error.message });
+  }
+};
