@@ -50,10 +50,15 @@ export const loginUser = async (req, res) => {
       { expiresIn: JWT_EXPIRES_IN }
     );
 
+    // ✅ Decode token to get exact expiration timestamp
+    const decoded = jwt.decode(token);
+    const expiresAt = decoded.exp * 1000; // Convert to milliseconds (JS timestamp)
+
     return res.status(200).json({
       message: "Login successful.",
       token,
-      expiresIn: JWT_EXPIRES_IN, // optional: frontend can read this
+      expiresIn: JWT_EXPIRES_IN,
+      expiresAt, // ✅ Exact timestamp when token expires (in ms)
       user: {
         userId: user.userId,
         firstname: user.firstname,
@@ -107,4 +112,13 @@ export const verifyToken = async (req, res) => {
       .status(401)
       .json({ message: "Invalid or expired token. Please log in again." });
   }
+};
+
+/* ===========================
+   🚪 LOGOUT USER
+=========================== */
+export const logout = (req, res) => {
+  // JWT is stateless, so we just confirm logout on client-side
+  // In production, you could add token to blacklist or database
+  res.status(200).json({ message: "Logged out successfully." });
 };
