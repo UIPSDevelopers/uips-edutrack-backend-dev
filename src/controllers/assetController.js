@@ -497,14 +497,17 @@ export const getAssetStats = async (req, res) => {
       { $group: { _id: "$status", count: { $sum: 1 } } },
     ]);
 
-    // by categoryId
+    // by categoryId (sorted desc)
     const categoryAgg = await Asset.aggregate([
       { $group: { _id: "$categoryId", count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
     ]);
 
-    // by locationId
+    // by locationId - sort descending and limit to top 5
     const locationAgg = await Asset.aggregate([
       { $group: { _id: "$locationId", count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 5 },
     ]);
 
     // resolve category names
