@@ -8,13 +8,13 @@ import {
 
 const router = express.Router();
 
-// list
+
 router.get("/assets", fetchAssets);
 
-// detail page
+
 router.get("/assets/:id", getAssetById);
 
-// add service
+
 router.post("/assets/:id/service", addAssetService);
 
 router.get("/assets/:id/qrcode", getAssetQRCode);

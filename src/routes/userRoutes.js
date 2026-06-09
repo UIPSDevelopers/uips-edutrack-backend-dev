@@ -9,7 +9,7 @@ import {
 
 const router = express.Router();
 
-// ✅ Place login route first
+
 
 router.post("/", addUser);
 router.get("/", getUsers);

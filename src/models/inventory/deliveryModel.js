@@ -12,7 +12,7 @@ const DeliveryItemSchema = new mongoose.Schema({
 
 const DeliverySchema = new mongoose.Schema(
   {
-    deliveryId: { type: String, unique: true, required: true }, // ✅ Custom delivery ID
+    deliveryId: { type: String, unique: true, required: true }, 
     deliveryNumber: { type: String, required: true },
     supplier: { type: String },
     receivedBy: { type: String, required: true },
@@ -25,7 +25,7 @@ const DeliverySchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-// ✅ Prevent OverwriteModelError
+
 const Delivery =
   mongoose.models.Delivery || mongoose.model("Delivery", DeliverySchema);
 

@@ -1,9 +1,9 @@
 import User from "../models/userModel.js";
 import bcrypt from "bcryptjs";
 
-/* ===========================
-   🧩 CREATE USER
-=========================== */
+
+
+
 export const addUser = async (req, res) => {
   try {
     const { firstname, lastname, email, role, password } = req.body;
@@ -17,7 +17,7 @@ export const addUser = async (req, res) => {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    // Generate incremental userId
+    
     const lastUser = await User.findOne().sort({ createdAt: -1 });
     let newId = 1;
     if (lastUser && lastUser.userId) {
@@ -51,9 +51,9 @@ export const addUser = async (req, res) => {
   }
 };
 
-/* ===========================
-   📋 GET ALL USERS
-=========================== */
+
+
+
 export const getUsers = async (req, res) => {
   try {
     const users = await User.find().select("-password").sort({ createdAt: -1 });
@@ -63,9 +63,9 @@ export const getUsers = async (req, res) => {
   }
 };
 
-/* ===========================
-   🔍 GET USER BY userId
-=========================== */
+
+
+
 export const getUserById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -79,9 +79,9 @@ export const getUserById = async (req, res) => {
   }
 };
 
-/* ===========================
-   ✏️ UPDATE USER BY userId
-=========================== */
+
+
+
 export const updateUser = async (req, res) => {
   try {
     const { id } = req.params;
@@ -95,7 +95,7 @@ export const updateUser = async (req, res) => {
     user.email = email || user.email;
     user.role = role || user.role;
 
-    // Only update password if provided
+    
     if (password && password.trim() !== "") {
       user.password = await bcrypt.hash(password, 10);
     }
@@ -118,9 +118,9 @@ export const updateUser = async (req, res) => {
   }
 };
 
-/* ===========================
-   ❌ DELETE USER BY userId
-=========================== */
+
+
+
 export const deleteUser = async (req, res) => {
   try {
     const { id } = req.params;

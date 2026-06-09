@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import Checkout from "../models/inventory/checkoutModel.js";
 import Inventory from "../models/inventory/inventoryModel.js";
 
-// 🧮 Generate unique checkout ID (incrementing)
+
 const generateCheckoutId = async (session) => {
   const last = await Checkout.findOne()
     .sort({ createdAt: -1 })
@@ -14,7 +14,7 @@ const generateCheckoutId = async (session) => {
   return `CH-${newId}`;
 };
 
-// ➕ Add new checkout (with rollback safety)
+
 export const addCheckout = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -22,17 +22,17 @@ export const addCheckout = async (req, res) => {
   try {
     const { receiptNo, issuedBy, items, remarks } = req.body;
 
-    // 🔹 Basic validation
+    
     if (!receiptNo || !issuedBy || !items || items.length === 0) {
       throw new Error("Receipt number, issuedBy, and items are required.");
     }
 
-    // ✅ Generate custom IDs
+    
     const checkoutId = await generateCheckoutId(session);
-    // ✅ Generate transaction number safely
+    
     const date = new Date().toISOString().slice(0, 10).replace(/-/g, "");
 
-    // Find latest transaction
+    
     const lastTransaction = await Checkout.findOne({
       transactionNo: new RegExp(`^TXN-${date}`),
     })
@@ -51,7 +51,7 @@ export const addCheckout = async (req, res) => {
 
     const enrichedItems = [];
 
-    // ✅ Validate & deduct stock
+    
     for (const item of items) {
       const existing = await Inventory.findOne({ itemId: item.itemId }).session(
         session,
@@ -69,11 +69,11 @@ export const addCheckout = async (req, res) => {
         );
       }
 
-      // Deduct quantity
+      
       existing.quantity = (existing.quantity || 0) - item.quantity;
       await existing.save({ session });
 
-      // ✅ Enrich item details from inventory
+      
       enrichedItems.push({
         itemId: existing.itemId,
         itemName: existing.itemName,
@@ -85,19 +85,19 @@ export const addCheckout = async (req, res) => {
       });
     }
 
-    // ✅ Save checkout record
+    
     const checkout = new Checkout({
       checkoutId,
       transactionNo,
       receiptNo,
       issuedBy,
       remarks: remarks || "",
-      items: enrichedItems, // enriched inventory items
+      items: enrichedItems, 
     });
 
     await checkout.save({ session });
 
-    // ✅ Commit transaction
+    
     await session.commitTransaction();
     session.endSession();
 
@@ -117,7 +117,7 @@ export const addCheckout = async (req, res) => {
   }
 };
 
-// 📋 Get all checkouts
+
 export const getCheckouts = async (req, res) => {
   try {
     const checkouts = await Checkout.find()
@@ -130,7 +130,7 @@ export const getCheckouts = async (req, res) => {
   }
 };
 
-// 🔍 Get checkout by receipt number or checkoutId
+
 export const getCheckoutById = async (req, res) => {
   try {
     const ref = req.params.id.trim();
@@ -153,7 +153,7 @@ export const getCheckoutById = async (req, res) => {
   }
 };
 
-// ❌ Delete checkout + restore inventory stock
+
 export const deleteCheckout = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -161,7 +161,7 @@ export const deleteCheckout = async (req, res) => {
   try {
     const ref = req.params.id.trim();
 
-    // 🔍 Find checkout
+    
     const checkout = await Checkout.findOne({
       $or: [{ receiptNo: ref }, { checkoutId: ref }, { transactionNo: ref }],
     }).session(session);
@@ -170,7 +170,7 @@ export const deleteCheckout = async (req, res) => {
       throw new Error("Checkout not found.");
     }
 
-    // ♻️ Restore inventory quantities
+    
     for (const item of checkout.items) {
       const inventoryItem = await Inventory.findOne({
         itemId: item.itemId,
@@ -183,10 +183,10 @@ export const deleteCheckout = async (req, res) => {
       }
     }
 
-    // 🗑 Delete checkout
+    
     await Checkout.deleteOne({ _id: checkout._id }).session(session);
 
-    // ✅ Commit transaction
+    
     await session.commitTransaction();
     session.endSession();
 

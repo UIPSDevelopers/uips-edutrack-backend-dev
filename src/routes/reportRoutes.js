@@ -17,7 +17,7 @@ router.get("/inventory", getInventoryReport);
 router.get("/summary", getSummaryReport);
 router.get("/asset", getAssetReports);
 
-// Public asset stats endpoint used by frontend dashboard
+
 router.get("/asset/stats", getAssetStats);
 
 export default router;

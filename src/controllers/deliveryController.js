@@ -3,7 +3,7 @@ import Delivery from "../models/inventory/deliveryModel.js";
 import Inventory from "../models/inventory/inventoryModel.js";
 import Counter from "../models/inventory/counter.js";
 
-// 🧮 Generate unique delivery ID (SAFE - no race condition)
+
 const generateDeliveryId = async (session) => {
   const counter = await Counter.findOneAndUpdate(
     { name: "delivery" },
@@ -16,7 +16,7 @@ const generateDeliveryId = async (session) => {
 
 
 
-// ➕ Add new delivery (SAFE + TRANSACTION)
+
 export const addDelivery = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -28,10 +28,10 @@ export const addDelivery = async (req, res) => {
       throw new Error("Delivery number, receivedBy, and items are required.");
     }
 
-    // 🧮 Generate ID safely
+    
     const deliveryId = await generateDeliveryId(session);
 
-    // ✅ Prepare items
+    
     const formattedItems = items.map((i, index) => {
       if (!i.itemId || !i.quantity) {
         throw new Error(`Invalid item at index ${index}`);
@@ -48,7 +48,7 @@ export const addDelivery = async (req, res) => {
       };
     });
 
-    // ✅ Create delivery
+    
     const delivery = await Delivery.create(
       [
         {
@@ -63,7 +63,7 @@ export const addDelivery = async (req, res) => {
       { session }
     );
 
-    // ✅ Update inventory (atomic)
+    
     for (const item of formattedItems) {
       const existing = await Inventory.findOne({ itemId: item.itemId }).session(session);
 
@@ -95,7 +95,7 @@ export const addDelivery = async (req, res) => {
 
 
 
-// 🗑️ DELETE DELIVERY (WITH INVENTORY ROLLBACK)
+
 export const deleteDelivery = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -109,7 +109,7 @@ export const deleteDelivery = async (req, res) => {
       throw new Error("Delivery not found.");
     }
 
-    // 🔄 Rollback inventory
+    
     for (const item of delivery.items) {
       const existing = await Inventory.findOne({ itemId: item.itemId }).session(session);
 
@@ -127,7 +127,7 @@ export const deleteDelivery = async (req, res) => {
       await existing.save({ session });
     }
 
-    // 🗑️ Delete delivery
+    
     await Delivery.deleteOne({ deliveryId: id }).session(session);
 
     await session.commitTransaction();
@@ -149,7 +149,7 @@ export const deleteDelivery = async (req, res) => {
 
 
 
-// 📋 Get all deliveries
+
 export const getDeliveries = async (req, res) => {
   try {
     const deliveries = await Delivery.find()
@@ -165,7 +165,7 @@ export const getDeliveries = async (req, res) => {
 
 
 
-// 🔍 Get delivery by ID
+
 export const getDeliveryById = async (req, res) => {
   try {
     const delivery = await Delivery.findOne({

@@ -1,21 +1,21 @@
 import locationsModel from "../models/propertytagging/locationsModel.js";
 
-/**
- * @desc    Add new location
- * @route   POST /api/locations
- */
+
+
+
+
 export const addLocation = async (req, res) => {
   try {
     const { name, building, floor, description } = req.body;
 
-    // Validate required field
+    
     if (!name) {
       return res.status(400).json({
         message: "Location name is required",
       });
     }
 
-    // Check duplicate name
+    
     const existingLocation = await locationsModel.findOne({ name });
 
     if (existingLocation) {
@@ -43,10 +43,10 @@ export const addLocation = async (req, res) => {
   }
 };
 
-/**
- * @desc    Get all locations (pagination + search)
- * @route   GET /api/locations?page=1&limit=10&search=room
- */
+
+
+
+
 export const getAllLocations = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -80,10 +80,10 @@ export const getAllLocations = async (req, res) => {
   }
 };
 
-/**
- * @desc    Update location
- * @route   PUT /api/locations/:id
- */
+
+
+
+
 export const updateLocation = async (req, res) => {
   try {
     const { id } = req.params;
@@ -97,7 +97,7 @@ export const updateLocation = async (req, res) => {
       });
     }
 
-    // check duplicate name
+    
     const existingLocation = await locationsModel.findOne({
       name,
       _id: { $ne: id },
@@ -128,10 +128,10 @@ export const updateLocation = async (req, res) => {
   }
 };
 
-/**
- * @desc    Delete location
- * @route   DELETE /api/locations/:id
- */
+
+
+
+
 export const deleteLocation = async (req, res) => {
   try {
     const { id } = req.params;

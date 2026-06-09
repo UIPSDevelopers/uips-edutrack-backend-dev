@@ -13,17 +13,17 @@ export const addReturn = async (req, res) => {
     if (!receiptRef || !returnedBy || !items?.length)
       throw new Error("Receipt number, returnedBy, and items are required.");
 
-    // ✅ Find the checkout
+    
     const checkout = await Checkout.findOne({ receiptNo: receiptRef }).session(
       session
     );
     if (!checkout)
       throw new Error(`Checkout with receipt ${receiptRef} not found.`);
 
-    // ✅ Find all past returns for the same receipt
+    
     const pastReturns = await Return.find({ receiptRef }).session(session);
 
-    // 🧮 Build a map of how many were already returned
+    
     const returnedCounts = {};
     pastReturns.forEach((r) =>
       r.items.forEach((i) => {
@@ -33,7 +33,7 @@ export const addReturn = async (req, res) => {
 
     const enrichedItems = [];
 
-    // ✅ Validate each item’s quantity against checkout + past returns
+    
     for (const item of items) {
       const checkoutItem = checkout.items.find((c) => c.itemId === item.itemId);
       if (!checkoutItem)
@@ -48,7 +48,7 @@ export const addReturn = async (req, res) => {
         );
       }
 
-      // ✅ Update inventory stock
+      
       const inv = await Inventory.findOne({ itemId: item.itemId }).session(
         session
       );
@@ -57,7 +57,7 @@ export const addReturn = async (req, res) => {
         await inv.save({ session });
       }
 
-      // ✅ Include sizeOrSource for display in Returns.jsx
+      
       enrichedItems.push({
         itemId: item.itemId,
         itemName: item.itemName,
@@ -69,13 +69,13 @@ export const addReturn = async (req, res) => {
       });
     }
 
-    // 🧾 Generate Return Number
+    
     const count = await Return.countDocuments().session(session);
     const next = String(count + 1).padStart(6, "0");
     const date = new Date().toISOString().slice(0, 10).replace(/-/g, "");
     const returnNumber = `R-${date}-${next}`;
 
-    // ✅ Save Return record
+    
     const newReturn = new Return({
       returnNumber,
       receiptRef,
@@ -102,7 +102,7 @@ export const addReturn = async (req, res) => {
   }
 };
 
-/* ✅ GET ALL RETURNS (for Returns.jsx list) */
+
 export const getReturns = async (req, res) => {
   try {
     const records = await Return.find().sort({ createdAt: -1 });
@@ -113,7 +113,7 @@ export const getReturns = async (req, res) => {
   }
 };
 
-/* ✅ GET SINGLE RETURN */
+
 export const getReturnById = async (req, res) => {
   try {
     const record = await Return.findOne({ returnNumber: req.params.id });

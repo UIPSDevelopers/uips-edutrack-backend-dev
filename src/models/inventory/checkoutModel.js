@@ -12,7 +12,7 @@ const itemSchema = new mongoose.Schema({
 
 const checkoutSchema = new mongoose.Schema(
   {
-    checkoutId: { type: String, unique: true, required: true }, // ✅ custom ID
+    checkoutId: { type: String, unique: true, required: true }, 
     transactionNo: { type: String, unique: true, required: true },
     receiptNo: { type: String, required: true },
     issuedBy: { type: String, required: true },

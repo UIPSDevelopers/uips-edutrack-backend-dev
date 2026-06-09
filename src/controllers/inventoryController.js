@@ -1,12 +1,12 @@
 import Inventory from "../models/inventory/inventoryModel.js";
 import Counter from "../models/inventory/counter.js";
-import Delivery from "../models/inventory/deliveryModel.js"; // 🆕 make sure path is correct
+import Delivery from "../models/inventory/deliveryModel.js"; 
 
 const generateItemId = async () => {
   const counter = await Counter.findOneAndUpdate(
     { name: "inventory" },
     { $inc: { seq: 1 } },
-    { new: true, upsert: true } // create if not exists
+    { new: true, upsert: true } 
   );
 
   const nextNumber = counter.seq;
@@ -24,7 +24,7 @@ const generateDeliveryId = async () => {
   return `DEL-${nextNumber.toString().padStart(6, "0")}`;
 };
 
-// 📦 Get all inventory items (with pagination + optional search/filter + fetch-all)
+
 export const getAllItems = async (req, res) => {
   try {
     const rawPage = parseInt(req.query.page, 10);
@@ -35,16 +35,16 @@ export const getAllItems = async (req, res) => {
     const allFlag = req.query.all === "true" || req.query.all === "1";
 
     const page = !allFlag && rawPage > 0 ? rawPage : 1;
-    const limit = allFlag ? 0 : rawLimit > 0 ? rawLimit : 20; // 0 = fetch all
+    const limit = allFlag ? 0 : rawLimit > 0 ? rawLimit : 20; 
 
     const filter = {};
 
-    // 🔍 filter by item type if provided
+    
     if (type && type !== "All") {
       filter.itemType = type;
     }
 
-    // 🔍 Optional search by name, type, size/source, barcode
+    
     if (search) {
       filter.$or = [
         { itemName: { $regex: search, $options: "i" } },
@@ -61,7 +61,7 @@ export const getAllItems = async (req, res) => {
     let total;
 
     if (limit === 0) {
-      // 🧹 fetch ALL (no pagination)
+      
       items = await baseQuery;
       total = items.length;
     } else {
@@ -86,7 +86,7 @@ export const getAllItems = async (req, res) => {
   }
 };
 
-// ✏️ Update item
+
 export const updateItem = async (req, res) => {
   try {
     const { id } = req.params;
@@ -111,7 +111,7 @@ export const updateItem = async (req, res) => {
   }
 };
 
-// 🗑️ Delete item
+
 export const deleteItem = async (req, res) => {
   try {
     const { id } = req.params;
@@ -128,7 +128,7 @@ export const deleteItem = async (req, res) => {
   }
 };
 
-// 🔍 Find item by barcode or serial number
+
 export const getItemByBarcode = async (req, res) => {
   try {
     const { barcode } = req.params;
@@ -145,7 +145,7 @@ export const getItemByBarcode = async (req, res) => {
   }
 };
 
-// ➕ Single add item
+
 export const addItem = async (req, res) => {
   try {
     const { itemType, itemName, sizeOrSource, gradeLevel, barcode, addedBy } = req.body;
@@ -171,7 +171,7 @@ export const addItem = async (req, res) => {
       gradeLevel,
       barcode,
       addedBy,
-      // quantity stays default: 0
+      
     });
 
     res.status(201).json({ message: "Item added successfully", item: newItem });
@@ -181,14 +181,14 @@ export const addItem = async (req, res) => {
   }
 };
 
-// 🚚 BULK ADD ITEMS (with quantity + optional Initial Delivery)
-// POST /api/inventory/bulk-add
-// body: {
-//   items: [ { itemType, itemName, sizeOrSource, barcode, quantity?, addedBy }, ... ],
-//   createInitialDelivery?: boolean,
-//   deliveryNumber?: string
-// }
-// 🚚 BULK ADD ITEMS (with quantity + optional Initial Delivery)
+
+
+
+
+
+
+
+
 export const bulkAddItems = async (req, res) => {
   try {
     const { items, createInitialDelivery, deliveryNumber } = req.body || {};
@@ -199,7 +199,7 @@ export const bulkAddItems = async (req, res) => {
         .json({ message: "No items provided for bulk insert." });
     }
 
-    // Clean / normalize input
+    
     const cleaned = items.map((item, index) => ({
       index,
       itemType: item.itemType?.toString().trim() || "",
@@ -207,7 +207,7 @@ export const bulkAddItems = async (req, res) => {
       sizeOrSource: item.sizeOrSource?.toString().trim() || "",
       gradeLevel: item.gradeLevel?.toString().trim() || "",
       barcode: item.barcode?.toString().trim() || "",
-      quantity: Number(item.quantity ?? 0) || 0, // 🆕 quantity support
+      quantity: Number(item.quantity ?? 0) || 0, 
       addedBy: item.addedBy?.toString().trim() || "Unknown User",
     }));
 
@@ -215,7 +215,7 @@ export const bulkAddItems = async (req, res) => {
     const validItems = [];
     const seenBarcodes = new Set();
 
-    // Basic validation + in-file duplicate check
+    
     for (const item of cleaned) {
       if (!item.itemType || !item.itemName || !item.barcode) {
         failedRows.push({
@@ -244,7 +244,7 @@ export const bulkAddItems = async (req, res) => {
       });
     }
 
-    // Check against existing barcodes in DB
+    
     const barcodes = validItems.map((i) => i.barcode);
     const existing = await Inventory.find({
       barcode: { $in: barcodes },
@@ -272,7 +272,7 @@ export const bulkAddItems = async (req, res) => {
         gradeLevel: item.gradeLevel,
         barcode: item.barcode,
         addedBy: item.addedBy,
-        quantity: item.quantity, // 🆕 initial stock from file
+        quantity: item.quantity, 
       });
     }
 
@@ -283,7 +283,7 @@ export const bulkAddItems = async (req, res) => {
       });
     }
 
-    // ✅ Insert inventory items
+    
     const inserted = await Inventory.insertMany(docsToInsert, {
       ordered: false,
     });
@@ -291,7 +291,7 @@ export const bulkAddItems = async (req, res) => {
     const successCount = inserted.length;
     const total = items.length;
 
-    // 🧾 Try to create an Initial Delivery record, but DON'T break if it fails
+    
     let deliveryDoc = null;
 
     if (createInitialDelivery && deliveryNumber && inserted.length > 0) {
@@ -301,7 +301,7 @@ export const bulkAddItems = async (req, res) => {
 
         deliveryDoc = await Delivery.create({
           deliveryId: newDeliveryId,
-          deliveryNumber: deliveryNumber.toString().trim(), // e.g. "initial"
+          deliveryNumber: deliveryNumber.toString().trim(), 
           supplier: "Initial Inventory Import",
           receivedBy,
           dateReceived: new Date(),
@@ -311,7 +311,7 @@ export const bulkAddItems = async (req, res) => {
             itemType: it.itemType,
             sizeOrSource: it.sizeOrSource || "",
             gradeLevel: it.gradeLevel || "",
-            barcode: [it.barcode], // keep same structure as /delivery/add
+            barcode: [it.barcode], 
             quantity: it.quantity || 0,
           })),
         });
@@ -320,7 +320,7 @@ export const bulkAddItems = async (req, res) => {
           "⚠ Error creating initial Delivery document from bulk import:",
           err
         );
-        // do NOT throw – import should still be considered success
+        
       }
     }
 
@@ -330,7 +330,7 @@ export const bulkAddItems = async (req, res) => {
           ? "Bulk insert successful."
           : "Bulk insert completed with some errors.",
       count: successCount,
-      failedRows, // [{ index, reason }]
+      failedRows, 
       total,
       createdDeliveryId: deliveryDoc?.deliveryId || null,
     });

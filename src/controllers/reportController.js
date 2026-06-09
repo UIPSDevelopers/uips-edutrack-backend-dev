@@ -3,11 +3,11 @@ import Checkout from "../models/inventory/checkoutModel.js";
 import Inventory from "../models/inventory/inventoryModel.js";
 import Return from "../models/inventory/returnModel.js";
 
-/* =========================
-   🔧 Helpers
-========================= */
 
-// 📅 Date filter builder
+
+
+
+
 const buildDateFilter = (from, to, field) => {
   if (!from || !to) return {};
   return {
@@ -18,10 +18,10 @@ const buildDateFilter = (from, to, field) => {
   };
 };
 
-// 📄 Format date
+
 const formatDate = (date) => new Date(date).toLocaleDateString();
 
-// 📦 Pagination
+
 const paginateArray = (array, page = 1, limit = 20, allFlag = false) => {
   const isAll = allFlag || !limit || Number(limit) === 0;
 
@@ -51,9 +51,9 @@ const paginateArray = (array, page = 1, limit = 20, allFlag = false) => {
   };
 };
 
-/* =========================
-   📦 DELIVERY REPORT
-========================= */
+
+
+
 
 export const getDeliveryReport = async (req, res) => {
   try {
@@ -70,7 +70,7 @@ export const getDeliveryReport = async (req, res) => {
         deliveryNumber: d.deliveryNumber,
         supplier: d.supplier,
         itemName: item.itemName,
-        itemType: item.itemType || "-", // ✅ ADDED
+        itemType: item.itemType || "-", 
         sizeOrSource: item.sizeOrSource || "-",
         gradeLevel: item.gradeLevel || "-",
         barcode: item.barcode?.length ? item.barcode.join(", ") : "-",
@@ -89,9 +89,9 @@ export const getDeliveryReport = async (req, res) => {
   }
 };
 
-/* =========================
-   🔁 RETURNS REPORT
-========================= */
+
+
+
 
 export const getReturnsReport = async (req, res) => {
   try {
@@ -110,7 +110,7 @@ export const getReturnsReport = async (req, res) => {
         transactionRef: r.transactionRef || "-",
         itemId: item.itemId,
         itemName: item.itemName,
-        itemType: item.itemType || "-", // ✅ ADDED
+        itemType: item.itemType || "-", 
         sizeOrSource: item.sizeOrSource || "-",
         gradeLevel: item.gradeLevel || "-",
         quantity: item.quantity,
@@ -130,9 +130,9 @@ export const getReturnsReport = async (req, res) => {
   }
 };
 
-/* =========================
-   📤 CHECKOUT REPORT
-========================= */
+
+
+
 
 export const getCheckoutReport = async (req, res) => {
   try {
@@ -169,9 +169,9 @@ export const getCheckoutReport = async (req, res) => {
   }
 };
 
-/* =========================
-   📊 INVENTORY REPORT
-========================= */
+
+
+
 
 export const getInventoryReport = async (req, res) => {
   try {
@@ -190,9 +190,9 @@ export const getInventoryReport = async (req, res) => {
   }
 };
 
-/* =========================
-   🧮 SUMMARY REPORT
-========================= */
+
+
+
 
 export const getSummaryReport = async (req, res) => {
   try {
@@ -207,7 +207,7 @@ export const getSummaryReport = async (req, res) => {
         ? { [field]: { $gte: fromDate, $lte: toDate } }
         : { [field]: { $lte: toDate } };
 
-    // Aggregations
+    
     const [deliveryAgg, checkoutAgg, returnsAgg] = await Promise.all([
       Delivery.aggregate([
         { $match: matchDate("dateReceived") },
@@ -241,7 +241,7 @@ export const getSummaryReport = async (req, res) => {
       ]),
     ]);
 
-    // Convert to maps (⚡ faster lookup)
+    
     const deliveryMap = Object.fromEntries(
       deliveryAgg.map((d) => [d._id, d.totalDelivered]),
     );

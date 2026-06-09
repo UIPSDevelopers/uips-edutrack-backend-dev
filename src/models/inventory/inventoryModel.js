@@ -2,13 +2,13 @@ import mongoose from "mongoose";
 
 const InventorySchema = new mongoose.Schema(
   {
-    itemId: { type: String, required: true, unique: true }, // 👈 added
+    itemId: { type: String, required: true, unique: true }, 
     itemType: { type: String, required: true },
     itemName: { type: String, required: true },
     sizeOrSource: { type: String },
     gradeLevel: { type: String },
     barcode: { type: String, required: true, unique: true },
-    quantity: { type: Number, default: 0 }, // 
+    quantity: { type: Number, default: 0 }, 
     addedBy: { type: String, required: true },
     barcodeImage: { type: String },
   },

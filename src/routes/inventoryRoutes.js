@@ -5,16 +5,16 @@ import {
   updateItem,
   deleteItem,
   getItemByBarcode,
-  bulkAddItems, // 🆕
+  bulkAddItems, 
 } from "../controllers/inventoryController.js";
 
-import { verifyToken } from "../middleware/authMiddleware.js";   // 🔐 adjust path if needed
-import { authorizeRole } from "../middleware/authorizeRole.js"; // 🛂
+import { verifyToken } from "../middleware/authMiddleware.js";   
+import { authorizeRole } from "../middleware/authorizeRole.js"; 
 
 const router = express.Router();
 
-// 📦 Get all inventory items
-// IT, InventoryStaff, Accounts, InventoryAdmin can VIEW
+
+
 router.get(
   "/",
   verifyToken,
@@ -22,8 +22,8 @@ router.get(
   getAllItems
 );
 
-// 🔍 Get item by barcode
-// Same as above: all 4 roles can use this
+
+
 router.get(
   "/barcode/:barcode",
   verifyToken,
@@ -31,8 +31,8 @@ router.get(
   getItemByBarcode
 );
 
-// ➕ Add new inventory item (single)
-// InventoryStaff CAN add (only edit/delete are blocked), plus IT, Accounts, InventoryAdmin
+
+
 router.post(
   "/add",
   verifyToken,
@@ -40,8 +40,8 @@ router.post(
   addItem
 );
 
-// 🧾 BULK IMPORT items
-// Same roles as add
+
+
 router.post(
   "/bulk-add",
   verifyToken,
@@ -49,8 +49,8 @@ router.post(
   bulkAddItems
 );
 
-// ✏️ Update inventory item
-// ❌ InventoryStaff NOT allowed
+
+
 router.put(
   "/:id",
   verifyToken,
@@ -58,8 +58,8 @@ router.put(
   updateItem
 );
 
-// 🗑️ Delete inventory item
-// Only IT + InventoryAdmin
+
+
 router.delete(
   "/:id",
   verifyToken,

@@ -4,12 +4,12 @@ export const addCategory = async (req, res) => {
   try {
     const { name, code } = req.body;
 
-    // Validate required field
+    
     if (!name) {
       return res.status(400).json({ message: "Category name is required" });
     }
 
-    // Check if category already exists
+    
     const existingCategory = await categoriesModel.findOne({
       $or: [{ name }, { code }],
     });
@@ -37,8 +37,8 @@ export const addCategory = async (req, res) => {
   }
 };
 
-// @desc    Get all categories (with pagination + search)
-// @route   GET /api/categories?page=1&limit=10&search=elec
+
+
 export const getAllCategories = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -47,7 +47,7 @@ export const getAllCategories = async (req, res) => {
 
     const skip = (page - 1) * limit;
 
-    // Search filter (case insensitive)
+    
     const searchFilter = {
       name: { $regex: search, $options: "i" },
     };
@@ -73,8 +73,8 @@ export const getAllCategories = async (req, res) => {
   }
 };
 
-// @desc    Update category
-// @route   PUT /api/categories/:id
+
+
 export const updateCategory = async (req, res) => {
   try {
     const { id } = req.params;
@@ -86,7 +86,7 @@ export const updateCategory = async (req, res) => {
       return res.status(404).json({ message: "Category not found" });
     }
 
-    // Check for duplicate name or code (excluding current category)
+    
     const existingCategory = await categoriesModel.findOne({
       $or: [{ name }, { code }],
       _id: { $ne: id },
@@ -115,8 +115,8 @@ export const updateCategory = async (req, res) => {
   }
 };
 
-// @desc    Delete category
-// @route   DELETE /api/categories/:id
+
+
 export const deleteCategory = async (req, res) => {
   try {
     const { id } = req.params;

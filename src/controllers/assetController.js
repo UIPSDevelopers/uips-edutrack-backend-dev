@@ -9,9 +9,9 @@ import { generateQRCodeBuffer } from "../utils/generateQRCode.js";
 
 import mongoose from "mongoose";
 
-/* =========================================================
-   CREATE SINGLE ASSET
-========================================================= */
+
+
+
 export const createSingleAsset = async (req, res) => {
   try {
     const {
@@ -58,7 +58,7 @@ export const createSingleAsset = async (req, res) => {
       remarks,
     });
 
-    // INITIAL HISTORY
+    
     await AssetHistory.create({
       assetId: asset._id,
       actionType: "ASSET_CREATED",
@@ -85,9 +85,9 @@ export const createSingleAsset = async (req, res) => {
   }
 };
 
-/* =========================================================
-   BULK CREATE ASSETS
-========================================================= */
+
+
+
 export const bulkCreateAssets = async (req, res) => {
   try {
     const { assets } = req.body;
@@ -186,9 +186,9 @@ export const bulkCreateAssets = async (req, res) => {
   }
 };
 
-/* =========================================================
-   GET ALL ASSETS
-========================================================= */
+
+
+
 export const fetchAssets = async (req, res) => {
   try {
     const { search } = req.query;
@@ -216,9 +216,9 @@ export const fetchAssets = async (req, res) => {
   }
 };
 
-/* =========================================================
-   GET SINGLE ASSET + HISTORY
-========================================================= */
+
+
+
 export const getAssetById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -254,9 +254,9 @@ export const getAssetById = async (req, res) => {
   }
 };
 
-/* =========================================================
-   ADD SERVICE
-========================================================= */
+
+
+
 export const addAssetService = async (req, res) => {
   try {
     const { id } = req.params;
@@ -293,9 +293,9 @@ export const addAssetService = async (req, res) => {
   }
 };
 
-/* =========================================================
-   QR CODE
-========================================================= */
+
+
+
 export const getAssetQRCode = async (req, res) => {
   try {
     const { id } = req.params;
@@ -319,9 +319,9 @@ export const getAssetQRCode = async (req, res) => {
   }
 };
 
-/* =========================================================
-   UPDATE ASSET + FIELD-BASED HISTORY TRACKING
-========================================================= */
+
+
+
 export const updateAsset = async (req, res) => {
   try {
     const { id } = req.params;
@@ -349,9 +349,9 @@ export const updateAsset = async (req, res) => {
 
     const historyRecords = [];
 
-    // ========================
-    // LOCATION CHANGE
-    // ========================
+    
+    
+    
     if (locationId) {
       const location = await locationsModel.findById(locationId);
       if (!location) {
@@ -372,9 +372,9 @@ export const updateAsset = async (req, res) => {
       });
     }
 
-    // ========================
-    // STATUS CHANGE
-    // ========================
+    
+    
+    
     if (status !== undefined && status !== oldStatus) {
       asset.status = status;
 
@@ -390,9 +390,9 @@ export const updateAsset = async (req, res) => {
       });
     }
 
-    // ========================
-    // REMARKS CHANGE
-    // ========================
+    
+    
+    
     if (remarks !== undefined && remarks !== oldRemarks) {
       asset.remarks = remarks;
 
@@ -437,9 +437,9 @@ export const getAssetReports = async (req, res) => {
       };
     }
 
-    // ======================
-    // HISTORY REPORTS
-    // ======================
+    
+    
+    
     if (type === "MOVEMENT") {
       const data = await AssetHistory.find({
         actionType: "LOCATION_CHANGE",
@@ -458,9 +458,9 @@ export const getAssetReports = async (req, res) => {
       return res.json({ data });
     }
 
-    // ======================
-    // SERVICE REPORT
-    // ======================
+    
+    
+    
     if (type === "SERVICE") {
       const data = await AssetService.find(dateFilter).populate(
         "assetId",
@@ -470,9 +470,9 @@ export const getAssetReports = async (req, res) => {
       return res.json({ data });
     }
 
-    // ======================
-    // DEFAULT: ASSET SUMMARY
-    // ======================
+    
+    
+    
     const data = await Asset.find()
       .populate("categoryId", "name")
       .populate("locationId", "name");
@@ -483,34 +483,34 @@ export const getAssetReports = async (req, res) => {
   }
 };
 
-/* =========================================================
-   ASSET STATS (for dashboard)
-   GET /api/reports/asset/stats
-========================================================= */
+
+
+
+
 export const getAssetStats = async (req, res) => {
   try {
-    // total assets
+    
     const total = await Asset.countDocuments();
 
-    // by status
+    
     const statusAgg = await Asset.aggregate([
       { $group: { _id: "$status", count: { $sum: 1 } } },
     ]);
 
-    // by categoryId (sorted desc)
+    
     const categoryAgg = await Asset.aggregate([
       { $group: { _id: "$categoryId", count: { $sum: 1 } } },
       { $sort: { count: -1 } },
     ]);
 
-    // by locationId - sort descending and limit to top 5
+    
     const locationAgg = await Asset.aggregate([
       { $group: { _id: "$locationId", count: { $sum: 1 } } },
       { $sort: { count: -1 } },
       { $limit: 5 },
     ]);
 
-    // resolve category names
+    
     const categoryIds = categoryAgg.map((c) => c._id).filter(Boolean);
     const categories = categoryIds.length
       ? await Category.find({ _id: { $in: categoryIds } }).select("name")
@@ -525,7 +525,7 @@ export const getAssetStats = async (req, res) => {
       count: c.count,
     }));
 
-    // resolve location names
+    
     const locationIds = locationAgg.map((l) => l._id).filter(Boolean);
     const locations = locationIds.length
       ? await locationsModel.find({ _id: { $in: locationIds } }).select("name building floor")
@@ -540,7 +540,7 @@ export const getAssetStats = async (req, res) => {
       count: l.count,
     }));
 
-    // normalize status result into object
+    
     const byStatus = statusAgg.reduce((acc, cur) => {
       acc[cur._id || "UNKNOWN"] = cur.count;
       return acc;

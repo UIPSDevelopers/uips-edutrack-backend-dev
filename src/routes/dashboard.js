@@ -6,10 +6,10 @@ import User from "../models/userModel.js";
 
 const router = express.Router();
 
-/**
- * GET /api/dashboard/summary
- * Dashboard main overview
- */
+
+
+
+
 router.get("/summary", async (req, res) => {
   try {
     const [
@@ -24,11 +24,11 @@ router.get("/summary", async (req, res) => {
       Delivery.countDocuments(),
       Checkout.countDocuments(),
       User.countDocuments(),
-      // Include all necessary fields for Low Stock table
+      
       Inventory.find({ quantity: { $lt: 5 } })
         .select("itemId itemName gradeLevel sizeOrSource itemType quantity")
         .limit(10),
-      // Aggregate for category distribution
+      
       Inventory.aggregate([
         { $group: { _id: "$itemType", count: { $sum: 1 } } },
         { $sort: { count: -1 } },
@@ -49,10 +49,10 @@ router.get("/summary", async (req, res) => {
   }
 });
 
-/**
- * GET /api/dashboard/top-checkedout
- * Top 5 most checked-out items
- */
+
+
+
+
 router.get("/top-checkedout", async (req, res) => {
   try {
     const topItems = await Checkout.aggregate([
@@ -74,11 +74,11 @@ router.get("/top-checkedout", async (req, res) => {
   }
 });
 
-/**
- * GET /api/dashboard/recent
- * 5 most recent deliveries or checkouts
- * Includes all items in each delivery/checkout
- */
+
+
+
+
+
 router.get("/recent", async (req, res) => {
   try {
     const [recentDeliveries, recentCheckouts] = await Promise.all([

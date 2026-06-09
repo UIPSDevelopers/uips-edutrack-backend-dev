@@ -6,15 +6,15 @@ import User from "../models/userModel.js";
 dotenv.config();
 
 const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "15m"; // ⏱ default 15 minutes
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "15m"; 
 
 if (!JWT_SECRET) {
   console.error("❌ JWT_SECRET is not defined in environment variables.");
 }
 
-/* ===========================
-   🔐 LOGIN USER
-=========================== */
+
+
+
 export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -25,7 +25,7 @@ export const loginUser = async (req, res) => {
         .json({ message: "Email and password are required." });
     }
 
-    // Allow login via email OR userId (username-style)
+    
     const user = await User.findOne({
       $or: [{ email: email }, { userId: email }],
     });
@@ -43,22 +43,22 @@ export const loginUser = async (req, res) => {
         .json({ message: "Invalid email/user ID or password." });
     }
 
-    // Generate short-lived JWT (15 minutes by default)
+    
     const token = jwt.sign(
       { userId: user.userId, email: user.email, role: user.role },
       JWT_SECRET,
       { expiresIn: JWT_EXPIRES_IN }
     );
 
-    // ✅ Decode token to get exact expiration timestamp
+    
     const decoded = jwt.decode(token);
-    const expiresAt = decoded.exp * 1000; // Convert to milliseconds (JS timestamp)
+    const expiresAt = decoded.exp * 1000; 
 
     return res.status(200).json({
       message: "Login successful.",
       token,
       expiresIn: JWT_EXPIRES_IN,
-      expiresAt, // ✅ Exact timestamp when token expires (in ms)
+      expiresAt, 
       user: {
         userId: user.userId,
         firstname: user.firstname,
@@ -75,9 +75,9 @@ export const loginUser = async (req, res) => {
   }
 };
 
-/* ===========================
-   🧠 VERIFY TOKEN (for /me)
-=========================== */
+
+
+
 export const verifyToken = async (req, res) => {
   try {
     const authHeader = req.headers.authorization;
@@ -101,7 +101,7 @@ export const verifyToken = async (req, res) => {
   } catch (error) {
     console.error("Verify token error:", error);
 
-    // Professional, clear messages
+    
     if (error.name === "TokenExpiredError") {
       return res
         .status(401)
@@ -114,11 +114,11 @@ export const verifyToken = async (req, res) => {
   }
 };
 
-/* ===========================
-   🚪 LOGOUT USER
-=========================== */
+
+
+
 export const logout = (req, res) => {
-  // JWT is stateless, so we just confirm logout on client-side
-  // In production, you could add token to blacklist or database
+  
+  
   res.status(200).json({ message: "Logged out successfully." });
 };

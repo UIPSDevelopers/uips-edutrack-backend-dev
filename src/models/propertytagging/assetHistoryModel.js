@@ -24,7 +24,7 @@ const assetHistorySchema = new mongoose.Schema(
       default: "System",
     },
 
-    // 🔥 CLEAN STRUCTURED CHANGE LOG
+    
     changes: {
       location: {
         old: {
