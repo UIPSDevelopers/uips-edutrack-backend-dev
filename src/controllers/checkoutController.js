@@ -20,7 +20,7 @@ export const addCheckout = async (req, res) => {
   session.startTransaction();
 
   try {
-    const { receiptNo, issuedBy, items } = req.body;
+    const { receiptNo, issuedBy, items, remarks } = req.body;
 
     // 🔹 Basic validation
     if (!receiptNo || !issuedBy || !items || items.length === 0) {
@@ -91,6 +91,7 @@ export const addCheckout = async (req, res) => {
       transactionNo,
       receiptNo,
       issuedBy,
+      remarks: remarks || "",
       items: enrichedItems, // enriched inventory items
     });
 
@@ -104,6 +105,7 @@ export const addCheckout = async (req, res) => {
       message: "✅ Checkout recorded successfully.",
       checkoutId,
       transactionNo,
+      remarks: remarks || "",
     });
   } catch (error) {
     console.error("❌ Error adding checkout:", error.message);

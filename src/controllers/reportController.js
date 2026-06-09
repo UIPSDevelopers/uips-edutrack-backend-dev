@@ -142,13 +142,14 @@ export const getCheckoutReport = async (req, res) => {
       buildDateFilter(from, to, "createdAt"),
     )
       .sort({ createdAt: -1 })
-      .select("transactionNo receiptNo issuedBy createdAt items");
+      .select("transactionNo receiptNo issuedBy createdAt remarks items");
 
     const formatted = checkouts.flatMap((c) =>
       c.items.map((item) => ({
         transactionNo: c.transactionNo,
         date: formatDate(c.createdAt),
         receiptNo: c.receiptNo,
+          remarks: c.remarks || "",
         itemType: item.itemType || "-",
         itemName: item.itemName || "-",
         gradeLevel: item.gradeLevel || "-",

@@ -16,6 +16,7 @@ const checkoutSchema = new mongoose.Schema(
     transactionNo: { type: String, unique: true, required: true },
     receiptNo: { type: String, required: true },
     issuedBy: { type: String, required: true },
+    remarks: { type: String, default: "" },
     items: [itemSchema],
   },
   { timestamps: true }
