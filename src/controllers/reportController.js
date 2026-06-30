@@ -3,11 +3,6 @@ import Checkout from "../models/inventory/checkoutModel.js";
 import Inventory from "../models/inventory/inventoryModel.js";
 import Return from "../models/inventory/returnModel.js";
 
-
-
-
-
-
 const buildDateFilter = (from, to, field) => {
   if (!from || !to) return {};
   return {
@@ -18,9 +13,7 @@ const buildDateFilter = (from, to, field) => {
   };
 };
 
-
 const formatDate = (date) => new Date(date).toLocaleDateString();
-
 
 const paginateArray = (array, page = 1, limit = 20, allFlag = false) => {
   const isAll = allFlag || !limit || Number(limit) === 0;
@@ -51,10 +44,6 @@ const paginateArray = (array, page = 1, limit = 20, allFlag = false) => {
   };
 };
 
-
-
-
-
 export const getDeliveryReport = async (req, res) => {
   try {
     const { from, to, page = 1, limit = 20, all } = req.query;
@@ -70,7 +59,7 @@ export const getDeliveryReport = async (req, res) => {
         deliveryNumber: d.deliveryNumber,
         supplier: d.supplier,
         itemName: item.itemName,
-        itemType: item.itemType || "-", 
+        itemType: item.itemType || "-",
         sizeOrSource: item.sizeOrSource || "-",
         gradeLevel: item.gradeLevel || "-",
         barcode: item.barcode?.length ? item.barcode.join(", ") : "-",
@@ -89,10 +78,6 @@ export const getDeliveryReport = async (req, res) => {
   }
 };
 
-
-
-
-
 export const getReturnsReport = async (req, res) => {
   try {
     const { from, to, page = 1, limit = 20, all } = req.query;
@@ -110,7 +95,7 @@ export const getReturnsReport = async (req, res) => {
         transactionRef: r.transactionRef || "-",
         itemId: item.itemId,
         itemName: item.itemName,
-        itemType: item.itemType || "-", 
+        itemType: item.itemType || "-",
         sizeOrSource: item.sizeOrSource || "-",
         gradeLevel: item.gradeLevel || "-",
         quantity: item.quantity,
@@ -130,10 +115,6 @@ export const getReturnsReport = async (req, res) => {
   }
 };
 
-
-
-
-
 export const getCheckoutReport = async (req, res) => {
   try {
     const { from, to, page = 1, limit = 20, all } = req.query;
@@ -149,7 +130,7 @@ export const getCheckoutReport = async (req, res) => {
         transactionNo: c.transactionNo,
         date: formatDate(c.createdAt),
         receiptNo: c.receiptNo,
-          remarks: c.remarks || "",
+        remarks: c.remarks || "",
         itemType: item.itemType || "-",
         itemName: item.itemName || "-",
         gradeLevel: item.gradeLevel || "-",
@@ -169,10 +150,6 @@ export const getCheckoutReport = async (req, res) => {
   }
 };
 
-
-
-
-
 export const getInventoryReport = async (req, res) => {
   try {
     const { page = 1, limit = 20, all } = req.query;
@@ -190,10 +167,6 @@ export const getInventoryReport = async (req, res) => {
   }
 };
 
-
-
-
-
 export const getSummaryReport = async (req, res) => {
   try {
     const { from, to, page = 1, limit = 20, all } = req.query;
@@ -207,7 +180,6 @@ export const getSummaryReport = async (req, res) => {
         ? { [field]: { $gte: fromDate, $lte: toDate } }
         : { [field]: { $lte: toDate } };
 
-    
     const [deliveryAgg, checkoutAgg, returnsAgg] = await Promise.all([
       Delivery.aggregate([
         { $match: matchDate("dateReceived") },
@@ -241,7 +213,6 @@ export const getSummaryReport = async (req, res) => {
       ]),
     ]);
 
-    
     const deliveryMap = Object.fromEntries(
       deliveryAgg.map((d) => [d._id, d.totalDelivered]),
     );
@@ -253,7 +224,7 @@ export const getSummaryReport = async (req, res) => {
     );
 
     const inventory = await Inventory.find().select(
-      "itemId itemName itemType sizeOrSource gradeLevel quantity",
+      "itemId itemName itemType barcode sizeOrSource gradeLevel quantity",
     );
 
     const summary = inventory.map((inv) => {
@@ -261,19 +232,16 @@ export const getSummaryReport = async (req, res) => {
       const totalCheckedOut = checkoutMap[inv.itemId] || 0;
       const totalReturned = returnMap[inv.itemId] || 0;
 
-      const netChange = totalDelivered + totalReturned - totalCheckedOut;
-
       return {
         itemId: inv.itemId,
         itemType: inv.itemType || "-",
         itemName: inv.itemName,
         gradeLevel: inv.gradeLevel || "-",
-        sizeOrSource: inv.sizeOrSource || "-",  
+        barcode: inv.barcode || "-",
+        sizeOrSource: inv.sizeOrSource || "-",
         totalDelivered,
         totalReturned,
         totalCheckedOut,
-        netChange,
-        totalStockAsOfDate: netChange,
         currentStock: inv.quantity,
       };
     });
@@ -283,7 +251,6 @@ export const getSummaryReport = async (req, res) => {
         acc.totalDelivered += cur.totalDelivered;
         acc.totalReturned += cur.totalReturned;
         acc.totalCheckedOut += cur.totalCheckedOut;
-        acc.totalStockAsOfDate += cur.totalStockAsOfDate;
         return acc;
       },
       {
