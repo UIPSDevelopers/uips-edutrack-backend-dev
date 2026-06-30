@@ -17,30 +17,31 @@ if (!JWT_SECRET) {
 
 export const loginUser = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, username, password } = req.body;
+    const loginValue = (email || username || "").trim();
 
-    if (!email || !password) {
+    if (!loginValue || !password) {
       return res
         .status(400)
-        .json({ message: "Email and password are required." });
+        .json({ message: "Email/username and password are required." });
     }
 
     
     const user = await User.findOne({
-      $or: [{ email: email }, { userId: email }],
+      $or: [{ email: loginValue }, { userId: loginValue }],
     });
 
     if (!user) {
       return res
         .status(401)
-        .json({ message: "Invalid email/user ID or password." });
+        .json({ message: "Invalid email/username/user ID or password." });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res
         .status(401)
-        .json({ message: "Invalid email/user ID or password." });
+        .json({ message: "Invalid email/username/user ID or password." });
     }
 
     

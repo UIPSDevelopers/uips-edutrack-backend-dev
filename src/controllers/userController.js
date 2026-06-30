@@ -6,13 +6,18 @@ import bcrypt from "bcryptjs";
 
 export const addUser = async (req, res) => {
   try {
-    const { firstname, lastname, email, role, password } = req.body;
+    const { firstname, lastname, email, username, role, password } = req.body;
+    const loginValue = (email || username || "").trim();
+
+    if (!loginValue) {
+      return res.status(400).json({ message: "Email/username is required" });
+    }
 
     if (!password) {
       return res.status(400).json({ message: "Password is required" });
     }
 
-    const existing = await User.findOne({ email });
+    const existing = await User.findOne({ email: loginValue });
     if (existing) {
       return res.status(400).json({ message: "User already exists" });
     }
@@ -30,7 +35,7 @@ export const addUser = async (req, res) => {
       userId,
       firstname,
       lastname,
-      email,
+      email: loginValue,
       role,
       password,
     });
@@ -85,14 +90,16 @@ export const getUserById = async (req, res) => {
 export const updateUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const { firstname, lastname, email, role, password } = req.body;
+    const { firstname, lastname, email, username, role, password } = req.body;
 
     const user = await User.findOne({ userId: id });
     if (!user) return res.status(404).json({ message: "User not found" });
 
+    const loginValue = (email || username || user.email || "").trim();
+
     user.firstname = firstname || user.firstname;
     user.lastname = lastname || user.lastname;
-    user.email = email || user.email;
+    user.email = loginValue || user.email;
     user.role = role || user.role;
 
     
